@@ -4,6 +4,7 @@ import type { Todo } from '../types/todo'
 
 type TodoListSectionProps = {
   displayedElapsedById: Record<number, number>
+  runningTodoId: number | null
   selectedTodoId: number | null
   todos: Todo[]
   onAddTodo: (title: string) => void
@@ -15,6 +16,7 @@ type TodoListSectionProps = {
 
 export function TodoListSection({
   displayedElapsedById,
+  runningTodoId,
   selectedTodoId,
   todos,
   onAddTodo,
@@ -61,6 +63,7 @@ export function TodoListSection({
           <TodoItem
             key={todo.id}
             displayedElapsedSec={displayedElapsedById[todo.id] ?? todo.totalElapsedSec}
+            isRunning={runningTodoId === todo.id}
             isSelected={selectedTodoId === todo.id}
             todo={todo}
             onDelete={onDeleteTodo}

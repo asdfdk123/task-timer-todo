@@ -122,6 +122,11 @@
   font: inherit;
 }
 
+.button-row button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .button-row button,
 .todo-actions button,
 .todo-create-form button,
@@ -247,6 +252,17 @@
 .todo-actions {
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 

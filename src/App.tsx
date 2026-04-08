@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ActiveTaskCard } from './components/ActiveTaskCard'
 import { SummarySection } from './components/SummarySection'
 import { TodoListSection } from './components/TodoListSection'
+import { useTodoTimer } from './hooks/useTodoTimer'
 import type { Todo } from './types/todo'
 import { formatDuration } from './utils/time'
 import './App.css'
@@ -27,12 +28,25 @@ function App() {
     setSelectedTodoId(fallbackTodo?.id ?? null)
   }, [selectedTodoId, todos])
 
+  const {
+    displayedElapsedById,
+    handleCompleteTimerTarget,
+    handlePauseTimer,
+    handleRemoveTimerTarget,
+    handleStartTimer,
+    handleStopTimer,
+    runningTodoId,
+  } = useTodoTimer({
+    selectedTodoId,
+    setSelectedTodoId,
+    setTodos,
+    todos,
+  })
+
   const completedCount = todos.filter((todo) => todo.completed).length
   const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null
-
-  const displayedElapsedById = Object.fromEntries(
-    todos.map((todo) => [todo.id, todo.totalElapsedSec]),
-  ) as Record<number, number>
+  const runningTodo = todos.find((todo) => todo.id === runningTodoId) ?? null
+  const activeCardTodo = runningTodo ?? selectedTodo
 
   const handleAddTodo = (title: string) => {
     const nextTodo: Todo = {
@@ -60,6 +74,8 @@ function App() {
   }
 
   const handleDeleteTodo = (id: number) => {
+    handleRemoveTimerTarget(id)
+
     if (selectedTodoId === id) {
       setSelectedTodoId(null)
     }
@@ -68,6 +84,8 @@ function App() {
   }
 
   const handleToggleTodo = (id: number) => {
+    handleCompleteTimerTarget(id)
+
     setTodos((currentTodos) =>
       currentTodos.map((todo) =>
         todo.id === id
@@ -84,8 +102,8 @@ function App() {
     setSelectedTodoId(id)
   }
 
-  const selectedElapsed = selectedTodo
-    ? displayedElapsedById[selectedTodo.id] ?? selectedTodo.totalElapsedSec
+  const activeElapsed = activeCardTodo
+    ? displayedElapsedById[activeCardTodo.id] ?? activeCardTodo.totalElapsedSec
     : 0
 
   return (
@@ -99,16 +117,21 @@ function App() {
         <SummarySection
           totalCount={todos.length}
           completedCount={completedCount}
-          focusLabel={selectedTodo?.title ?? 'No active task'}
+          focusLabel={activeCardTodo?.title ?? 'No active task'}
         />
 
         <ActiveTaskCard
-          elapsedTime={formatDuration(selectedElapsed)}
-          title={selectedTodo?.title ?? 'No active task selected'}
+          elapsedTime={formatDuration(activeElapsed)}
+          isRunning={runningTodoId === activeCardTodo?.id}
+          onPause={handlePauseTimer}
+          onStart={handleStartTimer}
+          onStop={handleStopTimer}
+          title={activeCardTodo?.title ?? 'No active task selected'}
         />
 
         <TodoListSection
           displayedElapsedById={displayedElapsedById}
+          runningTodoId={runningTodoId}
           selectedTodoId={selectedTodoId}
           todos={todos}
           onAddTodo={handleAddTodo}

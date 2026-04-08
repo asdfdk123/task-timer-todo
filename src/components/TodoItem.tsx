@@ -5,6 +5,7 @@ import { formatDuration } from '../utils/time'
 type TodoItemProps = {
   todo: Todo
   displayedElapsedSec: number
+  isRunning: boolean
   onDelete: (id: number) => void
   onSelect: (id: number) => void
   onToggle: (id: number) => void
@@ -15,6 +16,7 @@ type TodoItemProps = {
 export function TodoItem({
   todo,
   displayedElapsedSec,
+  isRunning,
   onDelete,
   onSelect,
   onToggle,
@@ -79,6 +81,7 @@ export function TodoItem({
             <span className={todo.completed ? 'todo-title completed' : 'todo-title'}>
               {todo.title}
             </span>
+            {isRunning ? <span className="live-indicator">Running</span> : null}
           </button>
         )}
       </div>
