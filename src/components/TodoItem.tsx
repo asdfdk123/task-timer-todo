@@ -43,7 +43,9 @@ export function TodoItem({
   }
 
   return (
-    <li className={`todo-item ${isSelected ? 'selected' : ''}`}>
+    <li
+      className={`todo-item ${isSelected ? 'selected' : ''} ${todo.completed ? 'is-completed' : ''} ${isRunning ? 'is-running' : ''}`}
+    >
       <div className="todo-main">
         <label className="todo-toggle">
           <input
