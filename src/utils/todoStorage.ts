@@ -1,5 +1,6 @@
 import type { Todo } from '../types/todo'
 import type { TodoAppState } from '../types/todoAppState'
+import { getLocalDateKey } from './time'
 
 const STORAGE_KEY = 'todo-timer-app-state'
 
@@ -30,11 +31,14 @@ function isTodoAppState(value: unknown): value is TodoAppState {
     state.todos.every(isTodo) &&
     (typeof state.selectedTodoId === 'number' || state.selectedTodoId === null) &&
     (typeof state.runningTodoId === 'number' || state.runningTodoId === null) &&
-    (typeof state.startedAt === 'number' || state.startedAt === null)
+    (typeof state.startedAt === 'number' || state.startedAt === null) &&
+    typeof state.todayFocusDateKey === 'string' &&
+    typeof state.todayFocusSec === 'number'
   )
 }
 
 export function sanitizeTodoAppState(state: TodoAppState): TodoAppState {
+  const currentDateKey = getLocalDateKey(Date.now())
   const todoIds = new Set(state.todos.map((todo) => todo.id))
   const selectedTodoId =
     state.selectedTodoId !== null && todoIds.has(state.selectedTodoId)
@@ -46,12 +50,17 @@ export function sanitizeTodoAppState(state: TodoAppState): TodoAppState {
       : null
   const startedAt =
     runningTodoId !== null && typeof state.startedAt === 'number' ? state.startedAt : null
+  const todayFocusDateKey =
+    state.todayFocusDateKey === currentDateKey ? state.todayFocusDateKey : currentDateKey
+  const todayFocusSec = todayFocusDateKey === state.todayFocusDateKey ? state.todayFocusSec : 0
 
   return {
     todos: state.todos,
     selectedTodoId,
     runningTodoId,
     startedAt,
+    todayFocusDateKey,
+    todayFocusSec,
   }
 }
 

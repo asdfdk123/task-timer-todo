@@ -6,6 +6,8 @@ import { useTodoAppStorage } from './hooks/useTodoAppStorage'
 import { useTodoTimer } from './hooks/useTodoTimer'
 import type { Todo } from './types/todo'
 import type { TodoAppState } from './types/todoAppState'
+import { buildSummaryCards, getCompletedCount } from './utils/summary'
+import { getLocalDateKey } from './utils/time'
 import { loadTodoAppState, sanitizeTodoAppState } from './utils/todoStorage'
 import { formatDuration } from './utils/time'
 import './App.css'
@@ -21,6 +23,8 @@ const fallbackState: TodoAppState = {
   selectedTodoId: initialTodos.find((todo) => !todo.completed)?.id ?? initialTodos[0]?.id ?? null,
   runningTodoId: null,
   startedAt: null,
+  todayFocusDateKey: getLocalDateKey(Date.now()),
+  todayFocusSec: 0,
 }
 
 function App() {
@@ -39,6 +43,7 @@ function App() {
 
   const {
     displayedElapsedById,
+    displayedTodayFocusSec,
     handleCompleteTimerTarget,
     handlePauseTimer,
     handleRemoveTimerTarget,
@@ -46,9 +51,13 @@ function App() {
     handleStopTimer,
     runningTodoId,
     startedAt,
+    todayFocusDateKey,
+    todayFocusSec,
   } = useTodoTimer({
     initialRunningTodoId: initialState.runningTodoId,
     initialStartedAt: initialState.startedAt,
+    initialTodayFocusDateKey: initialState.todayFocusDateKey,
+    initialTodayFocusSec: initialState.todayFocusSec,
     selectedTodoId,
     setSelectedTodoId,
     setTodos,
@@ -61,13 +70,22 @@ function App() {
       selectedTodoId,
       runningTodoId,
       startedAt,
+      todayFocusDateKey,
+      todayFocusSec,
     }),
   )
 
-  const completedCount = todos.filter((todo) => todo.completed).length
+  const completedCount = getCompletedCount(todos)
   const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null
   const runningTodo = todos.find((todo) => todo.id === runningTodoId) ?? null
   const activeCardTodo = runningTodo ?? selectedTodo
+  const summaryCards = buildSummaryCards({
+    activeTaskTitle: activeCardTodo?.title ?? null,
+    completedCount,
+    isRunning: runningTodoId !== null,
+    todayFocusSec: displayedTodayFocusSec,
+    totalCount: todos.length,
+  })
 
   const handleAddTodo = (title: string) => {
     const nextTodo: Todo = {
@@ -135,11 +153,7 @@ function App() {
           <h1>Focus on one task while keeping the whole list in view.</h1>
         </header>
 
-        <SummarySection
-          totalCount={todos.length}
-          completedCount={completedCount}
-          focusLabel={activeCardTodo?.title ?? 'No active task'}
-        />
+        <SummarySection cards={summaryCards} />
 
         <ActiveTaskCard
           elapsedTime={formatDuration(activeElapsed)}

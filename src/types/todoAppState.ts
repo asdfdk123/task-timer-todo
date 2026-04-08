@@ -5,4 +5,6 @@ export type TodoAppState = {
   selectedTodoId: number | null
   runningTodoId: number | null
   startedAt: number | null
+  todayFocusDateKey: string
+  todayFocusSec: number
 }

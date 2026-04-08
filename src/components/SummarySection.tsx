@@ -1,33 +1,24 @@
-type SummarySectionProps = {
-  totalCount: number
-  completedCount: number
-  focusLabel: string
+type SummaryCard = {
+  label: string
+  value: string
+  description: string
+  emphasizeText?: boolean
 }
 
-export function SummarySection({
-  totalCount,
-  completedCount,
-  focusLabel,
-}: SummarySectionProps) {
+type SummarySectionProps = {
+  cards: SummaryCard[]
+}
+
+export function SummarySection({ cards }: SummarySectionProps) {
   return (
     <section className="summary-grid">
-      <article className="panel summary-card">
-        <p className="section-label">Summary</p>
-        <strong>{totalCount}</strong>
-        <span>Total Tasks</span>
-      </article>
-
-      <article className="panel summary-card">
-        <p className="section-label">Completed</p>
-        <strong>{completedCount}</strong>
-        <span>Tasks Done</span>
-      </article>
-
-      <article className="panel summary-card">
-        <p className="section-label">Focus</p>
-        <strong className="summary-text">{focusLabel}</strong>
-        <span>Current Highlight</span>
-      </article>
+      {cards.map((card) => (
+        <article key={card.label} className="panel summary-card">
+          <p className="section-label">{card.label}</p>
+          <strong className={card.emphasizeText ? 'summary-text' : undefined}>{card.value}</strong>
+          <span>{card.description}</span>
+        </article>
+      ))}
     </section>
   )
 }

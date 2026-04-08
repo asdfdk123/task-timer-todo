@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { Todo } from '../types/todo'
+import { getLocalDateKey, getTodayElapsedSeconds } from '../utils/time'
 
 type UseTodoTimerParams = {
   initialRunningTodoId: number | null
   initialStartedAt: number | null
+  initialTodayFocusDateKey: string
+  initialTodayFocusSec: number
   selectedTodoId: number | null
   setSelectedTodoId: Dispatch<SetStateAction<number | null>>
   setTodos: Dispatch<SetStateAction<Todo[]>>
@@ -23,14 +26,34 @@ function calculateElapsedSeconds(baseSeconds: number, startedAt: number | null, 
 export function useTodoTimer({
   initialRunningTodoId,
   initialStartedAt,
+  initialTodayFocusDateKey,
+  initialTodayFocusSec,
   selectedTodoId,
   setSelectedTodoId,
   setTodos,
   todos,
 }: UseTodoTimerParams) {
+  const currentDateKey = getLocalDateKey(Date.now())
   const [runningTodoId, setRunningTodoId] = useState<number | null>(initialRunningTodoId)
   const [startedAt, setStartedAt] = useState<number | null>(initialStartedAt)
+  const [todayFocusDateKey, setTodayFocusDateKey] = useState(
+    initialTodayFocusDateKey === currentDateKey ? initialTodayFocusDateKey : currentDateKey,
+  )
+  const [todayFocusSec, setTodayFocusSec] = useState(
+    initialTodayFocusDateKey === currentDateKey ? initialTodayFocusSec : 0,
+  )
   const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const nextDateKey = getLocalDateKey(now)
+
+    if (todayFocusDateKey === nextDateKey) {
+      return
+    }
+
+    setTodayFocusDateKey(nextDateKey)
+    setTodayFocusSec(0)
+  }, [now, todayFocusDateKey])
 
   useEffect(() => {
     if (runningTodoId === null || startedAt === null) {
@@ -51,7 +74,10 @@ export function useTodoTimer({
       return
     }
 
-    const elapsedSeconds = calculateElapsedSeconds(0, startedAt, Date.now())
+    const commitTime = Date.now()
+    const elapsedSeconds = calculateElapsedSeconds(0, startedAt, commitTime)
+    const nextDateKey = getLocalDateKey(commitTime)
+    const todayElapsedSeconds = getTodayElapsedSeconds(startedAt, commitTime)
 
     setTodos((currentTodos) =>
       currentTodos.map((todo) =>
@@ -63,9 +89,13 @@ export function useTodoTimer({
           : todo,
       ),
     )
+    setTodayFocusDateKey(nextDateKey)
+    setTodayFocusSec((currentFocusSec) =>
+      (todayFocusDateKey === nextDateKey ? currentFocusSec : 0) + todayElapsedSeconds,
+    )
 
     setStartedAt(null)
-    setNow(Date.now())
+    setNow(commitTime)
   }
 
   const displayedElapsedById = Object.fromEntries(
@@ -78,6 +108,14 @@ export function useTodoTimer({
       return [todo.id, displayedElapsed]
     }),
   ) as Record<number, number>
+
+  const displayedTodayFocusSec =
+    runningTodoId !== null && startedAt !== null
+      ? (todayFocusDateKey === getLocalDateKey(now) ? todayFocusSec : 0) +
+        getTodayElapsedSeconds(startedAt, now)
+      : todayFocusDateKey === getLocalDateKey(now)
+        ? todayFocusSec
+        : 0
 
   const handleStartTimer = () => {
     if (selectedTodoId === null) {
@@ -134,6 +172,7 @@ export function useTodoTimer({
 
   return {
     displayedElapsedById,
+    displayedTodayFocusSec,
     handleCompleteTimerTarget,
     handlePauseTimer,
     handleRemoveTimerTarget,
@@ -141,5 +180,7 @@ export function useTodoTimer({
     handleStopTimer,
     runningTodoId,
     startedAt,
+    todayFocusDateKey,
+    todayFocusSec,
   }
 }
