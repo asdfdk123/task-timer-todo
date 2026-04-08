@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { ActiveTaskCard } from './components/ActiveTaskCard'
 import { SummarySection } from './components/SummarySection'
 import { TodoListSection } from './components/TodoListSection'
+import { useTodoAppStorage } from './hooks/useTodoAppStorage'
 import { useTodoTimer } from './hooks/useTodoTimer'
 import type { Todo } from './types/todo'
+import type { TodoAppState } from './types/todoAppState'
+import { loadTodoAppState, sanitizeTodoAppState } from './utils/todoStorage'
 import { formatDuration } from './utils/time'
 import './App.css'
 
@@ -13,11 +16,17 @@ const initialTodos: Todo[] = [
   { id: 3, title: 'Prepare timer interaction flow', completed: false, totalElapsedSec: 1115 },
 ]
 
+const fallbackState: TodoAppState = {
+  todos: initialTodos,
+  selectedTodoId: initialTodos.find((todo) => !todo.completed)?.id ?? initialTodos[0]?.id ?? null,
+  runningTodoId: null,
+  startedAt: null,
+}
+
 function App() {
-  const [todos, setTodos] = useState(initialTodos)
-  const [selectedTodoId, setSelectedTodoId] = useState<number | null>(
-    initialTodos.find((todo) => !todo.completed)?.id ?? initialTodos[0]?.id ?? null,
-  )
+  const [initialState] = useState(() => loadTodoAppState(fallbackState))
+  const [todos, setTodos] = useState(initialState.todos)
+  const [selectedTodoId, setSelectedTodoId] = useState<number | null>(initialState.selectedTodoId)
 
   useEffect(() => {
     if (selectedTodoId !== null && todos.some((todo) => todo.id === selectedTodoId)) {
@@ -36,12 +45,24 @@ function App() {
     handleStartTimer,
     handleStopTimer,
     runningTodoId,
+    startedAt,
   } = useTodoTimer({
+    initialRunningTodoId: initialState.runningTodoId,
+    initialStartedAt: initialState.startedAt,
     selectedTodoId,
     setSelectedTodoId,
     setTodos,
     todos,
   })
+
+  useTodoAppStorage(
+    sanitizeTodoAppState({
+      todos,
+      selectedTodoId,
+      runningTodoId,
+      startedAt,
+    }),
+  )
 
   const completedCount = todos.filter((todo) => todo.completed).length
   const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null

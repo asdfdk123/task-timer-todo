@@ -3,6 +3,8 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { Todo } from '../types/todo'
 
 type UseTodoTimerParams = {
+  initialRunningTodoId: number | null
+  initialStartedAt: number | null
   selectedTodoId: number | null
   setSelectedTodoId: Dispatch<SetStateAction<number | null>>
   setTodos: Dispatch<SetStateAction<Todo[]>>
@@ -19,13 +21,15 @@ function calculateElapsedSeconds(baseSeconds: number, startedAt: number | null, 
 }
 
 export function useTodoTimer({
+  initialRunningTodoId,
+  initialStartedAt,
   selectedTodoId,
   setSelectedTodoId,
   setTodos,
   todos,
 }: UseTodoTimerParams) {
-  const [runningTodoId, setRunningTodoId] = useState<number | null>(null)
-  const [startedAt, setStartedAt] = useState<number | null>(null)
+  const [runningTodoId, setRunningTodoId] = useState<number | null>(initialRunningTodoId)
+  const [startedAt, setStartedAt] = useState<number | null>(initialStartedAt)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -136,5 +140,6 @@ export function useTodoTimer({
     handleStartTimer,
     handleStopTimer,
     runningTodoId,
+    startedAt,
   }
 }
