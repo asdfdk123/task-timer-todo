@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react'
 import { ActiveTaskCard } from './components/ActiveTaskCard'
 import { SummarySection } from './components/SummarySection'
 import { TodoListSection } from './components/TodoListSection'
-import { useTodoAppStorage } from './hooks/useTodoAppStorage'
 import type { Todo } from './types/todo'
-import type { TodoAppState } from './types/todoAppState'
-import { loadTodoAppState, sanitizeTodoAppState } from './utils/storage'
 import { formatDuration } from './utils/time'
 import './App.css'
 
@@ -15,43 +12,11 @@ const initialTodos: Todo[] = [
   { id: 3, title: 'Prepare timer interaction flow', completed: false, totalElapsedSec: 1115 },
 ]
 
-const fallbackState: TodoAppState = {
-  runningTodoId: null,
-  selectedTodoId: initialTodos.find((todo) => !todo.completed)?.id ?? initialTodos[0]?.id ?? null,
-  startedAt: null,
-  todos: initialTodos,
-}
-
 function App() {
-  const [initialState] = useState(() => loadTodoAppState(fallbackState))
-  const [todos, setTodos] = useState(initialState.todos)
-  const [selectedTodoId, setSelectedTodoId] = useState<number | null>(initialState.selectedTodoId)
-  const [runningTodoId, setRunningTodoId] = useState<number | null>(initialState.runningTodoId)
-  const [startedAt, setStartedAt] = useState<number | null>(initialState.startedAt)
-  const [now, setNow] = useState(() => Date.now())
-
-  useTodoAppStorage(
-    sanitizeTodoAppState({
-      runningTodoId,
-      selectedTodoId,
-      startedAt,
-      todos,
-    }),
+  const [todos, setTodos] = useState(initialTodos)
+  const [selectedTodoId, setSelectedTodoId] = useState<number | null>(
+    initialTodos.find((todo) => !todo.completed)?.id ?? initialTodos[0]?.id ?? null,
   )
-
-  useEffect(() => {
-    if (runningTodoId === null || startedAt === null) {
-      return
-    }
-
-    const timerId = window.setInterval(() => {
-      setNow(Date.now())
-    }, 250)
-
-    return () => {
-      window.clearInterval(timerId)
-    }
-  }, [runningTodoId, startedAt])
 
   useEffect(() => {
     if (selectedTodoId !== null && todos.some((todo) => todo.id === selectedTodoId)) {
@@ -65,39 +30,9 @@ function App() {
   const completedCount = todos.filter((todo) => todo.completed).length
   const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null
 
-  const getRunningSeconds = (todo: Todo) => {
-    if (todo.id !== runningTodoId || startedAt === null) {
-      return todo.totalElapsedSec
-    }
-
-    const additionalSeconds = Math.floor((now - startedAt) / 1000)
-    return todo.totalElapsedSec + Math.max(0, additionalSeconds)
-  }
-
   const displayedElapsedById = Object.fromEntries(
-    todos.map((todo) => [todo.id, getRunningSeconds(todo)]),
+    todos.map((todo) => [todo.id, todo.totalElapsedSec]),
   ) as Record<number, number>
-
-  const commitRunningTime = (targetTodoId: number) => {
-    if (runningTodoId !== targetTodoId || startedAt === null) {
-      return
-    }
-
-    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
-
-    setTodos((currentTodos) =>
-      currentTodos.map((todo) =>
-        todo.id === targetTodoId
-          ? {
-              ...todo,
-              totalElapsedSec: todo.totalElapsedSec + elapsedSeconds,
-            }
-          : todo,
-      ),
-    )
-    setStartedAt(null)
-    setNow(Date.now())
-  }
 
   const handleAddTodo = (title: string) => {
     const nextTodo: Todo = {
@@ -125,11 +60,6 @@ function App() {
   }
 
   const handleDeleteTodo = (id: number) => {
-    if (runningTodoId === id) {
-      setRunningTodoId(null)
-      setStartedAt(null)
-    }
-
     if (selectedTodoId === id) {
       setSelectedTodoId(null)
     }
@@ -138,11 +68,6 @@ function App() {
   }
 
   const handleToggleTodo = (id: number) => {
-    if (runningTodoId === id) {
-      commitRunningTime(id)
-      setRunningTodoId(null)
-    }
-
     setTodos((currentTodos) =>
       currentTodos.map((todo) =>
         todo.id === id
@@ -157,40 +82,6 @@ function App() {
 
   const handleSelectTodo = (id: number) => {
     setSelectedTodoId(id)
-  }
-
-  const handleStartTimer = () => {
-    if (selectedTodo === null) {
-      return
-    }
-
-    if (runningTodoId !== null && runningTodoId !== selectedTodo.id) {
-      commitRunningTime(runningTodoId)
-    }
-
-    if (runningTodoId === selectedTodo.id) {
-      return
-    }
-
-    setRunningTodoId(selectedTodo.id)
-    setStartedAt(Date.now())
-    setNow(Date.now())
-  }
-
-  const handlePauseTimer = () => {
-    if (runningTodoId === null) {
-      return
-    }
-
-    commitRunningTime(runningTodoId)
-    setRunningTodoId(null)
-  }
-
-  const handleStopTimer = () => {
-    if (runningTodoId !== null) {
-      commitRunningTime(runningTodoId)
-      setRunningTodoId(null)
-    }
   }
 
   const selectedElapsed = selectedTodo
@@ -213,16 +104,11 @@ function App() {
 
         <ActiveTaskCard
           elapsedTime={formatDuration(selectedElapsed)}
-          isRunning={runningTodoId === selectedTodo?.id}
-          onPause={handlePauseTimer}
-          onStart={handleStartTimer}
-          onStop={handleStopTimer}
           title={selectedTodo?.title ?? 'No active task selected'}
         />
 
         <TodoListSection
           displayedElapsedById={displayedElapsedById}
-          runningTodoId={runningTodoId}
           selectedTodoId={selectedTodoId}
           todos={todos}
           onAddTodo={handleAddTodo}

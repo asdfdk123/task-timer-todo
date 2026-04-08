@@ -4,24 +4,22 @@ import { formatDuration } from '../utils/time'
 
 type TodoItemProps = {
   todo: Todo
+  displayedElapsedSec: number
   onDelete: (id: number) => void
   onSelect: (id: number) => void
   onToggle: (id: number) => void
   onUpdate: (id: number, title: string) => void
-  isRunning: boolean
   isSelected: boolean
-  displayedElapsedSec: number
 }
 
 export function TodoItem({
   todo,
+  displayedElapsedSec,
   onDelete,
   onSelect,
   onToggle,
   onUpdate,
-  isRunning,
   isSelected,
-  displayedElapsedSec,
 }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [draftTitle, setDraftTitle] = useState(todo.title)
@@ -81,7 +79,6 @@ export function TodoItem({
             <span className={todo.completed ? 'todo-title completed' : 'todo-title'}>
               {todo.title}
             </span>
-            {isRunning ? <span className="live-indicator">Running</span> : null}
           </button>
         )}
       </div>

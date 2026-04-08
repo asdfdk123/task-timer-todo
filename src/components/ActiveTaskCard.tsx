@@ -1,20 +1,9 @@
 type ActiveTaskCardProps = {
   title: string
   elapsedTime: string
-  isRunning: boolean
-  onPause: () => void
-  onStart: () => void
-  onStop: () => void
 }
 
-export function ActiveTaskCard({
-  title,
-  elapsedTime,
-  isRunning,
-  onPause,
-  onStart,
-  onStop,
-}: ActiveTaskCardProps) {
+export function ActiveTaskCard({ title, elapsedTime }: ActiveTaskCardProps) {
   return (
     <section className="panel active-task-section">
       <div className="section-heading">
@@ -28,15 +17,9 @@ export function ActiveTaskCard({
       </div>
 
       <div className="button-row" aria-label="Timer controls">
-        <button type="button" onClick={onStart} disabled={isRunning}>
-          Start
-        </button>
-        <button type="button" onClick={onPause} disabled={!isRunning}>
-          Pause
-        </button>
-        <button type="button" onClick={onStop}>
-          Stop
-        </button>
+        <button type="button">Start</button>
+        <button type="button">Pause</button>
+        <button type="button">Stop</button>
       </div>
     </section>
   )
