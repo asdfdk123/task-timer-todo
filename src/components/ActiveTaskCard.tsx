@@ -33,10 +33,18 @@ export function ActiveTaskCard({
       <div className="active-task-body">
         <InteractiveTimer
           durationSeconds={durationSeconds}
+          helperText={
+            isRunning
+              ? '집중이 진행 중입니다'
+              : '원을 드래그해 시간을 정하세요'
+          }
+          isInteractive={!isRunning}
           isRunning={isRunning}
           onDurationChange={onDurationChange}
           remainingSeconds={remainingSeconds}
           remainingTime={remainingTime}
+          state={isRunning ? 'running' : 'idle'}
+          stateLabel={isRunning ? '집중 중' : '시간 설정'}
         />
 
         <div className="active-task-timer">

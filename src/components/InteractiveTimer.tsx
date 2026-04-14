@@ -2,16 +2,21 @@ import { useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
 
 const MAX_MINUTES = 60
-const SIZE = 220
+const SNAP_MINUTES = 5
+const SIZE = 280
 const CENTER = SIZE / 2
-const RADIUS = 96
+const RADIUS = 126
 
 type InteractiveTimerProps = {
   durationSeconds: number
+  helperText: string
+  isInteractive: boolean
   isRunning: boolean
   onDurationChange: (durationSeconds: number) => void
   remainingSeconds: number
   remainingTime: string
+  state: 'idle' | 'running' | 'paused' | 'finished'
+  stateLabel: string
 }
 
 function polarToCartesian(angle: number) {
@@ -56,26 +61,30 @@ function getMinutesFromPointer(event: PointerEvent<SVGSVGElement>, svg: SVGSVGEl
   const angle = Math.atan2(y, x) + Math.PI / 2
   const normalizedAngle = (angle + Math.PI * 2) % (Math.PI * 2)
   const ratio = normalizedAngle / (Math.PI * 2)
-  const minutes = Math.round(ratio * MAX_MINUTES)
+  const minutes = Math.round((ratio * MAX_MINUTES) / SNAP_MINUTES) * SNAP_MINUTES
 
-  return minutes === 0 ? MAX_MINUTES : minutes
+  return minutes === 0 ? MAX_MINUTES : Math.min(MAX_MINUTES, Math.max(SNAP_MINUTES, minutes))
 }
 
 export function InteractiveTimer({
   durationSeconds,
+  helperText,
+  isInteractive,
   isRunning,
   onDurationChange,
   remainingSeconds,
   remainingTime,
+  state,
+  stateLabel,
 }: InteractiveTimerProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const remainingRatio = durationSeconds > 0 ? remainingSeconds / durationSeconds : 0
   const sectorPath = createSectorPath(Math.min(1, Math.max(0, remainingRatio)))
-  const selectedMinutes = Math.max(1, Math.round(durationSeconds / 60))
+  const selectedMinutes = Math.max(SNAP_MINUTES, Math.round(durationSeconds / 60))
 
   const updateDurationFromPointer = (event: PointerEvent<SVGSVGElement>) => {
-    if (isRunning || svgRef.current === null) {
+    if (!isInteractive || isRunning || svgRef.current === null) {
       return
     }
 
@@ -84,7 +93,7 @@ export function InteractiveTimer({
   }
 
   const handlePointerDown = (event: PointerEvent<SVGSVGElement>) => {
-    if (isRunning) {
+    if (!isInteractive || isRunning) {
       return
     }
 
@@ -111,7 +120,7 @@ export function InteractiveTimer({
 
   return (
     <div
-      className={isRunning ? 'interactive-timer running' : 'interactive-timer'}
+      className={`interactive-timer ${state}`}
       aria-label={`타이머가 ${selectedMinutes}분으로 설정되었습니다. 남은 시간은 ${remainingTime}입니다.`}
       role="group"
     >
@@ -127,14 +136,14 @@ export function InteractiveTimer({
       >
         <circle className="interactive-timer-dial" cx={CENTER} cy={CENTER} r={RADIUS} />
         {sectorPath ? <path className="interactive-timer-sector" d={sectorPath} /> : null}
-        <circle className="interactive-timer-inner" cx={CENTER} cy={CENTER} r="58" />
-        <line className="interactive-timer-marker" x1={CENTER} y1="17" x2={CENTER} y2="31" />
+        <circle className="interactive-timer-inner" cx={CENTER} cy={CENTER} r="68" />
+        <line className="interactive-timer-marker" x1={CENTER} y1="10" x2={CENTER} y2="28" />
       </svg>
 
       <div className="interactive-timer-center">
-        <span>{isRunning ? '카운트다운 중' : '시간 설정'}</span>
+        <span>{stateLabel}</span>
         <strong>{remainingTime}</strong>
-        <small>{isRunning ? '언제든 일시정지할 수 있어요' : '원을 드래그하세요'}</small>
+        <small>{helperText}</small>
       </div>
     </div>
   )

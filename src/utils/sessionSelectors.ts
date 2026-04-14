@@ -27,6 +27,24 @@ export function getTotalSessionDuration(sessions: TimerSession[]) {
   return sessions.reduce((total, session) => total + session.durationSec, 0)
 }
 
+export function getSessionsInCurrentWeek(sessions: TimerSession[], baseDate = new Date()) {
+  const weekStart = new Date(baseDate)
+  const day = weekStart.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+
+  weekStart.setDate(weekStart.getDate() + diffToMonday)
+  weekStart.setHours(0, 0, 0, 0)
+
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 7)
+
+  return sessions.filter((session) => {
+    const completedAt = new Date(session.completedAt)
+
+    return completedAt >= weekStart && completedAt < weekEnd
+  })
+}
+
 export function getWeekdaySummary(sessions: TimerSession[]) {
   return WEEKDAYS.map((weekday) => ({
     weekday,

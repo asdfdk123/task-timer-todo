@@ -157,7 +157,6 @@ export function useTodoTimer({
 
     commitRunningTime(runningTodoId, true)
     setRunningTodoId(null)
-    setTimerRemainingSec(timerDurationSec)
   }, [displayedRemainingSec, runningTodoId, startedAt])
 
   const displayedElapsedById = Object.fromEntries(

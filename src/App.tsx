@@ -1,21 +1,15 @@
 import { useEffect, useState } from "react";
-import { ActiveTaskCard } from "./components/ActiveTaskCard";
-import { SessionHistorySection } from "./components/SessionHistorySection";
-import { SummarySection } from "./components/SummarySection";
-import { TodoListSection } from "./components/TodoListSection";
+import { BottomTabBar } from "./components/BottomTabBar";
 import { useTodoAppStorage } from "./hooks/useTodoAppStorage";
 import { useTodoTimer } from "./hooks/useTodoTimer";
+import { RecordsPage } from "./pages/RecordsPage";
+import { TimerPage } from "./pages/TimerPage";
 import type { TimerSession } from "./types/session";
 import type { Todo } from "./types/todo";
 import type { TodoAppState } from "./types/todoAppState";
-import {
-  getSessionsByDate,
-  getTotalSessionDuration,
-} from "./utils/sessionSelectors";
-import { buildSummaryCards, getCompletedCount } from "./utils/summary";
+import { getSessionsByDate } from "./utils/sessionSelectors";
 import { getLocalDateKey } from "./utils/time";
 import { loadTodoAppState, sanitizeTodoAppState } from "./utils/todoStorage";
-import { formatDuration } from "./utils/time";
 import "./App.css";
 
 const initialTodos: Todo[] = [
@@ -57,6 +51,7 @@ const fallbackState: TodoAppState = {
 
 function App() {
   const [initialState] = useState(() => loadTodoAppState(fallbackState));
+  const [activeTab, setActiveTab] = useState<"timer" | "records">("timer");
   const [todos, setTodos] = useState(initialState.todos);
   const [sessions, setSessions] = useState<TimerSession[]>(
     initialState.sessions,
@@ -82,7 +77,7 @@ function App() {
   const {
     displayedElapsedById,
     displayedRemainingSec,
-    activeRunElapsedSec,
+    displayedTodayFocusSec,
     activeSessionStartedAt,
     handleCompleteTimerTarget,
     handlePauseTimer,
@@ -126,22 +121,10 @@ function App() {
     }),
   );
 
-  const completedCount = getCompletedCount(todos);
   const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null;
   const runningTodo = todos.find((todo) => todo.id === runningTodoId) ?? null;
   const activeCardTodo = runningTodo ?? selectedTodo;
   const todaySessions = getSessionsByDate(sessions, getLocalDateKey(Date.now()));
-  const todaySessionDurationSec = getTotalSessionDuration(todaySessions);
-  const summaryCards = buildSummaryCards({
-    activeTaskTitle: activeCardTodo?.title ?? null,
-    completedCount,
-    isRunning: runningTodoId !== null,
-    todayFocusSec:
-      runningTodoId !== null
-        ? todaySessionDurationSec + activeRunElapsedSec
-        : todaySessionDurationSec,
-    totalCount: todos.length,
-  });
 
   const handleAddTodo = (title: string) => {
     const nextTodo: Todo = {
@@ -200,42 +183,32 @@ function App() {
   return (
     <main className="app">
       <div className="app-shell">
-        <header className="app-header">
-          <p className="app-eyebrow">TODO 타이머</p>
-          <h1>할 일을 고르고, 집중한 시간을 기록하세요.</h1>
-        </header>
-
-        <SummarySection cards={summaryCards} />
-
-        <ActiveTaskCard
-          durationSeconds={timerDurationSec}
-          isRunning={runningTodoId === activeCardTodo?.id}
-          onDurationChange={handleTimerDurationChange}
-          onPause={handlePauseTimer}
-          onReset={handleResetTimer}
-          onStart={handleStartTimer}
-          remainingSeconds={displayedRemainingSec}
-          remainingTime={formatDuration(displayedRemainingSec)}
-          title={activeCardTodo?.title ?? "선택된 할 일이 없습니다"}
-        />
-
-        <TodoListSection
-          displayedElapsedById={displayedElapsedById}
-          runningTodoId={runningTodoId}
-          selectedTodoId={selectedTodoId}
-          todos={todos}
-          onAddTodo={handleAddTodo}
-          onDeleteTodo={handleDeleteTodo}
-          onSelectTodo={handleSelectTodo}
-          onToggleTodo={handleToggleTodo}
-          onUpdateTodo={handleUpdateTodo}
-        />
-
-        <SessionHistorySection
-          sessions={sessions}
-          todaySessions={todaySessions}
-        />
+        {activeTab === "timer" ? (
+          <TimerPage
+            displayedElapsedById={displayedElapsedById}
+            displayedRemainingSec={displayedRemainingSec}
+            runningTodoId={runningTodoId}
+            selectedTodo={activeCardTodo}
+            selectedTodoId={selectedTodoId}
+            sessionsTodayCount={todaySessions.length}
+            timerDurationSec={timerDurationSec}
+            todayFocusSec={displayedTodayFocusSec}
+            todos={todos}
+            onAddTodo={handleAddTodo}
+            onDeleteTodo={handleDeleteTodo}
+            onDurationChange={handleTimerDurationChange}
+            onPause={handlePauseTimer}
+            onReset={handleResetTimer}
+            onSelectTodo={handleSelectTodo}
+            onStart={handleStartTimer}
+            onToggleTodo={handleToggleTodo}
+            onUpdateTodo={handleUpdateTodo}
+          />
+        ) : (
+          <RecordsPage sessions={sessions} />
+        )}
       </div>
+      <BottomTabBar activeTab={activeTab} onChange={setActiveTab} />
     </main>
   );
 }
