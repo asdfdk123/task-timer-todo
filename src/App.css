@@ -370,14 +370,24 @@ button:disabled {
 
 .todo-create-form input,
 .todo-create-row input,
-.todo-edit-form input {
+.todo-edit-form input,
+.todo-edit-form textarea {
   flex: 1;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
   border: 1px solid hsl(var(--border));
   border-radius: 18px;
   padding: 13px 15px;
   color: hsl(var(--foreground));
   background: hsl(var(--background));
+}
+
+.todo-edit-form textarea {
+  min-height: 92px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  resize: none;
 }
 
 .todo-create-row input {
@@ -418,6 +428,7 @@ button:disabled {
 .todo-create-form input:focus,
 .todo-create-row input:focus,
 .todo-edit-form input:focus,
+.todo-edit-form textarea:focus,
 button:focus-visible {
   outline: 3px solid hsl(var(--ring) / 0.22);
   outline-offset: 2px;
@@ -442,6 +453,7 @@ button:focus-visible {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
+  min-width: 0;
   padding: 16px;
   border: 1px solid hsl(var(--border));
   border-radius: 22px;
@@ -493,6 +505,7 @@ button:focus-visible {
   align-items: center;
   flex: 1;
   gap: 10px;
+  min-width: 0;
 }
 
 .todo-select-button {
@@ -568,7 +581,18 @@ button:focus-visible {
 
 .todo-edit-form {
   flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   gap: 10px;
+}
+
+.todo-edit-form .todo-actions {
+  justify-content: flex-start;
+}
+
+.todo-edit-form .todo-actions button {
+  flex: 1 1 88px;
 }
 
 .status-badge {
@@ -751,6 +775,15 @@ button:focus-visible {
   .todo-side,
   .todo-meta {
     align-items: flex-start;
+  }
+
+  .todo-edit-form,
+  .todo-edit-form .todo-actions {
+    width: 100%;
+  }
+
+  .todo-edit-form .todo-actions button {
+    flex: 1 1 120px;
   }
 
   .todo-create-row {

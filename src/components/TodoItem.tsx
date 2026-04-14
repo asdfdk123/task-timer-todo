@@ -68,11 +68,11 @@ export function TodoItem({
 
         {isEditing ? (
           <div className="todo-edit-form">
-            <input
-              type="text"
+            <textarea
               value={draftTitle}
               onChange={(event) => setDraftTitle(event.target.value)}
               aria-label="할 일 제목 수정"
+              rows={3}
             />
             <div className="todo-actions">
               <button type="button" onClick={handleSave}>
