@@ -1,45 +1,70 @@
-import { useEffect, useState } from 'react'
-import { ActiveTaskCard } from './components/ActiveTaskCard'
-import { SummarySection } from './components/SummarySection'
-import { TodoListSection } from './components/TodoListSection'
-import { useTodoAppStorage } from './hooks/useTodoAppStorage'
-import { useTodoTimer } from './hooks/useTodoTimer'
-import type { Todo } from './types/todo'
-import type { TodoAppState } from './types/todoAppState'
-import { buildSummaryCards, getCompletedCount } from './utils/summary'
-import { getLocalDateKey } from './utils/time'
-import { loadTodoAppState, sanitizeTodoAppState } from './utils/todoStorage'
-import { formatDuration } from './utils/time'
-import './App.css'
+import { useEffect, useState } from "react";
+import { ActiveTaskCard } from "./components/ActiveTaskCard";
+import { SummarySection } from "./components/SummarySection";
+import { TodoListSection } from "./components/TodoListSection";
+import { useTodoAppStorage } from "./hooks/useTodoAppStorage";
+import { useTodoTimer } from "./hooks/useTodoTimer";
+import type { Todo } from "./types/todo";
+import type { TodoAppState } from "./types/todoAppState";
+import { buildSummaryCards, getCompletedCount } from "./utils/summary";
+import { getLocalDateKey } from "./utils/time";
+import { loadTodoAppState, sanitizeTodoAppState } from "./utils/todoStorage";
+import { formatDuration } from "./utils/time";
+import "./App.css";
 
 const initialTodos: Todo[] = [
-  { id: 1, title: 'Write project outline', completed: false, totalElapsedSec: 2720 },
-  { id: 2, title: 'Design main screen layout', completed: true, totalElapsedSec: 4330 },
-  { id: 3, title: 'Prepare timer interaction flow', completed: false, totalElapsedSec: 1115 },
-]
+  {
+    id: 1,
+    title: "Write project outline",
+    completed: false,
+    totalElapsedSec: 2720,
+  },
+  {
+    id: 2,
+    title: "Design main screen layout",
+    completed: true,
+    totalElapsedSec: 4330,
+  },
+  {
+    id: 3,
+    title: "Prepare timer interaction flow",
+    completed: false,
+    totalElapsedSec: 1115,
+  },
+];
 
 const fallbackState: TodoAppState = {
   todos: initialTodos,
-  selectedTodoId: initialTodos.find((todo) => !todo.completed)?.id ?? initialTodos[0]?.id ?? null,
+  selectedTodoId:
+    initialTodos.find((todo) => !todo.completed)?.id ??
+    initialTodos[0]?.id ??
+    null,
   runningTodoId: null,
   startedAt: null,
   todayFocusDateKey: getLocalDateKey(Date.now()),
   todayFocusSec: 0,
-}
+};
 
 function App() {
-  const [initialState] = useState(() => loadTodoAppState(fallbackState))
-  const [todos, setTodos] = useState(initialState.todos)
-  const [selectedTodoId, setSelectedTodoId] = useState<number | null>(initialState.selectedTodoId)
+  const [initialState] = useState(() => loadTodoAppState(fallbackState));
+  const [todos, setTodos] = useState(initialState.todos);
+  const [selectedTodoId, setSelectedTodoId] = useState<number | null>(
+    initialState.selectedTodoId,
+  );
 
   useEffect(() => {
-    if (selectedTodoId !== null && todos.some((todo) => todo.id === selectedTodoId)) {
-      return
+    if (
+      selectedTodoId !== null &&
+      todos.some((todo) => todo.id === selectedTodoId)
+    ) {
+      return;
     }
 
-    const fallbackTodo = todos.find((todo) => !todo.completed) ?? todos[0] ?? null
-    setSelectedTodoId(fallbackTodo?.id ?? null)
-  }, [selectedTodoId, todos])
+    const fallbackTodo =
+      todos.find((todo) => !todo.completed) ?? todos[0] ?? null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedTodoId(fallbackTodo?.id ?? null);
+  }, [selectedTodoId, todos]);
 
   const {
     displayedElapsedById,
@@ -62,7 +87,7 @@ function App() {
     setSelectedTodoId,
     setTodos,
     todos,
-  })
+  });
 
   useTodoAppStorage(
     sanitizeTodoAppState({
@@ -73,19 +98,19 @@ function App() {
       todayFocusDateKey,
       todayFocusSec,
     }),
-  )
+  );
 
-  const completedCount = getCompletedCount(todos)
-  const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null
-  const runningTodo = todos.find((todo) => todo.id === runningTodoId) ?? null
-  const activeCardTodo = runningTodo ?? selectedTodo
+  const completedCount = getCompletedCount(todos);
+  const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null;
+  const runningTodo = todos.find((todo) => todo.id === runningTodoId) ?? null;
+  const activeCardTodo = runningTodo ?? selectedTodo;
   const summaryCards = buildSummaryCards({
     activeTaskTitle: activeCardTodo?.title ?? null,
     completedCount,
     isRunning: runningTodoId !== null,
     todayFocusSec: displayedTodayFocusSec,
     totalCount: todos.length,
-  })
+  });
 
   const handleAddTodo = (title: string) => {
     const nextTodo: Todo = {
@@ -93,11 +118,11 @@ function App() {
       title,
       completed: false,
       totalElapsedSec: 0,
-    }
+    };
 
-    setTodos((currentTodos) => [nextTodo, ...currentTodos])
-    setSelectedTodoId(nextTodo.id)
-  }
+    setTodos((currentTodos) => [nextTodo, ...currentTodos]);
+    setSelectedTodoId(nextTodo.id);
+  };
 
   const handleUpdateTodo = (id: number, title: string) => {
     setTodos((currentTodos) =>
@@ -109,21 +134,21 @@ function App() {
             }
           : todo,
       ),
-    )
-  }
+    );
+  };
 
   const handleDeleteTodo = (id: number) => {
-    handleRemoveTimerTarget(id)
+    handleRemoveTimerTarget(id);
 
     if (selectedTodoId === id) {
-      setSelectedTodoId(null)
+      setSelectedTodoId(null);
     }
 
-    setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== id))
-  }
+    setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== id));
+  };
 
   const handleToggleTodo = (id: number) => {
-    handleCompleteTimerTarget(id)
+    handleCompleteTimerTarget(id);
 
     setTodos((currentTodos) =>
       currentTodos.map((todo) =>
@@ -134,16 +159,17 @@ function App() {
             }
           : todo,
       ),
-    )
-  }
+    );
+  };
 
   const handleSelectTodo = (id: number) => {
-    setSelectedTodoId(id)
-  }
+    setSelectedTodoId(id);
+  };
 
   const activeElapsed = activeCardTodo
-    ? displayedElapsedById[activeCardTodo.id] ?? activeCardTodo.totalElapsedSec
-    : 0
+    ? (displayedElapsedById[activeCardTodo.id] ??
+      activeCardTodo.totalElapsedSec)
+    : 0;
 
   return (
     <main className="app">
@@ -161,7 +187,7 @@ function App() {
           onPause={handlePauseTimer}
           onStart={handleStartTimer}
           onStop={handleStopTimer}
-          title={activeCardTodo?.title ?? 'No active task selected'}
+          title={activeCardTodo?.title ?? "No active task selected"}
         />
 
         <TodoListSection
@@ -177,7 +203,7 @@ function App() {
         />
       </div>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;
