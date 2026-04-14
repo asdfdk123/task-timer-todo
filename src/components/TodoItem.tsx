@@ -55,9 +55,9 @@ export function TodoItem({
           />
           <span
             className={`status-badge ${todo.completed ? 'done' : 'pending'}`}
-            aria-label={todo.completed ? 'Completed' : 'Pending'}
+            aria-label={todo.completed ? '완료됨' : '진행 중'}
           >
-            {todo.completed ? 'Done' : 'Open'}
+            {todo.completed ? '완료' : '진행중'}
           </span>
         </label>
 
@@ -67,14 +67,14 @@ export function TodoItem({
               type="text"
               value={draftTitle}
               onChange={(event) => setDraftTitle(event.target.value)}
-              aria-label="Edit todo title"
+              aria-label="할 일 제목 수정"
             />
             <div className="todo-actions">
               <button type="button" onClick={handleSave}>
-                Save
+                저장
               </button>
               <button type="button" className="ghost-button" onClick={handleCancel}>
-                Cancel
+                취소
               </button>
             </div>
           </div>
@@ -83,27 +83,27 @@ export function TodoItem({
             <span className={todo.completed ? 'todo-title completed' : 'todo-title'}>
               {todo.title}
             </span>
-            {isRunning ? <span className="live-indicator">Running</span> : null}
+            {isRunning ? <span className="live-indicator">진행 중</span> : null}
           </button>
         )}
       </div>
 
       <div className="todo-side">
         <div className="todo-meta">
-          <span className="time-label">Accumulated Time</span>
+          <span className="time-label">누적 시간</span>
           <strong>{formatDuration(displayedElapsedSec)}</strong>
         </div>
 
         {!isEditing ? (
           <div className="todo-actions">
             <button type="button" className="ghost-button" onClick={() => onSelect(todo.id)}>
-              Select
+              선택
             </button>
             <button type="button" className="ghost-button" onClick={() => setIsEditing(true)}>
-              Edit
+              수정
             </button>
             <button type="button" className="danger-button" onClick={() => onDelete(todo.id)}>
-              Delete
+              삭제
             </button>
           </div>
         ) : null}

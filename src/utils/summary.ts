@@ -18,24 +18,24 @@ export function buildSummaryCards({
 }: SummaryInput) {
   return [
     {
-      label: 'Today',
+      label: '오늘',
       value: formatReadableDuration(todayFocusSec),
-      description: 'Total Focus Time',
+      description: '총 집중 시간',
     },
     {
-      label: 'Completed',
+      label: '완료',
       value: String(completedCount),
-      description: 'Tasks Done',
+      description: '완료한 할 일',
     },
     {
-      label: 'Total',
+      label: '전체',
       value: String(totalCount),
-      description: 'All Tasks',
+      description: '전체 할 일',
     },
     {
-      label: 'Status',
-      value: isRunning ? 'In Progress' : 'Idle',
-      description: activeTaskTitle ?? 'No active task',
+      label: '상태',
+      value: isRunning ? '진행 중' : '대기 중',
+      description: activeTaskTitle ?? '현재 작업 없음',
       emphasizeText: true,
     },
   ]

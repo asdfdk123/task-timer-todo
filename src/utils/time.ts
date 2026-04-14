@@ -15,12 +15,12 @@ export function formatReadableDuration(totalSeconds: number) {
   const minutes = Math.floor((safeSeconds % 3600) / 60)
   const seconds = safeSeconds % 60
   const parts = [
-    hours > 0 ? `${hours}h` : null,
-    minutes > 0 ? `${minutes}m` : null,
-    hours === 0 ? `${seconds}s` : null,
+    hours > 0 ? `${hours}시간` : null,
+    minutes > 0 ? `${minutes}분` : null,
+    hours === 0 ? `${seconds}초` : null,
   ].filter(Boolean)
 
-  return parts.join(' ') || '0s'
+  return parts.join(' ') || '0초'
 }
 
 export function getLocalDateKey(timestamp: number) {

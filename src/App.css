@@ -85,7 +85,16 @@
 }
 
 .active-task-section {
-  gap: 20px;
+  gap: 24px;
+}
+
+.active-task-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  padding: 8px 0;
 }
 
 .section-heading {
@@ -97,16 +106,101 @@
   display: inline-flex;
   flex-direction: column;
   gap: 6px;
-  padding: 18px 20px;
+  padding: 16px 18px;
   border-radius: 14px;
-  background: #f3f4f6;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   width: fit-content;
 }
 
 .active-task-timer strong {
-  font-size: 2rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+.timer-helper {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.interactive-timer {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: #fffafa;
+  box-shadow:
+    inset 0 0 0 1px #fecaca,
+    0 16px 36px rgba(127, 29, 29, 0.1);
+  touch-action: none;
+}
+
+.interactive-timer-face {
+  width: 208px;
+  height: 208px;
+  cursor: grab;
+}
+
+.interactive-timer.running .interactive-timer-face {
+  cursor: default;
+}
+
+.interactive-timer-dial {
+  fill: #fff1f2;
+  stroke: #fecaca;
+  stroke-width: 2;
+}
+
+.interactive-timer-sector {
+  fill: #ef4444;
+  opacity: 0.92;
+  transition: d 0.2s linear;
+}
+
+.interactive-timer-inner {
+  fill: #ffffff;
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 1;
+}
+
+.interactive-timer-marker {
+  stroke: #991b1b;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.interactive-timer-center {
+  position: absolute;
+  display: grid;
+  gap: 5px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.interactive-timer-center strong {
+  color: #111827;
+  font-size: 1.75rem;
+  letter-spacing: 0.03em;
+}
+
+.interactive-timer-center span,
+.interactive-timer-center small {
+  color: #6b7280;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.interactive-timer.running .interactive-timer-center span {
+  color: #dc2626;
+}
+
+.interactive-timer-center small {
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .button-row {
@@ -328,6 +422,112 @@
   color: #6b7280;
 }
 
+.history-section {
+  display: grid;
+  gap: 18px;
+}
+
+.history-today-card {
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.history-today-card strong {
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.history-today-card span:last-child,
+.history-empty,
+.session-item span,
+.date-group-item span {
+  color: #6b7280;
+}
+
+.weekday-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.weekday-card {
+  display: grid;
+  grid-template-rows: auto 96px auto;
+  gap: 8px;
+  justify-items: center;
+  padding: 12px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.weekday-card span,
+.weekday-card strong {
+  font-size: 0.85rem;
+}
+
+.weekday-bar-track {
+  display: flex;
+  align-items: flex-end;
+  width: 18px;
+  height: 96px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.weekday-bar-fill {
+  width: 100%;
+  border-radius: 999px;
+  background: #ef4444;
+}
+
+.history-columns {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 16px;
+}
+
+.history-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.history-panel h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.session-list,
+.date-group-list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.session-item,
+.date-group-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fcfcfd;
+}
+
+.session-item div,
+.date-group-item div {
+  display: grid;
+  gap: 4px;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -380,5 +580,40 @@
 
   .button-row {
     flex-wrap: wrap;
+  }
+
+  .weekday-grid,
+  .history-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .weekday-card {
+    grid-template-columns: 52px 1fr auto;
+    grid-template-rows: auto;
+    align-items: center;
+  }
+
+  .weekday-bar-track {
+    width: 100%;
+    height: 12px;
+  }
+
+  .active-task-body {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .interactive-timer {
+    width: 180px;
+    height: 180px;
+  }
+
+  .interactive-timer-face {
+    width: 168px;
+    height: 168px;
+  }
+
+  .interactive-timer-center strong {
+    font-size: 1.35rem;
   }
 }

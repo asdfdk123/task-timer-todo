@@ -1,41 +1,61 @@
 import { useEffect, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
+import type { TimerSession } from '../types/session'
 import type { Todo } from '../types/todo'
+import { createTimerSession } from '../utils/sessions'
 import { getLocalDateKey, getTodayElapsedSeconds } from '../utils/time'
 
 type UseTodoTimerParams = {
+  initialActiveSessionStartedAt: number | null
   initialRunningTodoId: number | null
   initialStartedAt: number | null
+  initialTimerDurationSec: number
+  initialTimerRemainingSec: number
   initialTodayFocusDateKey: string
   initialTodayFocusSec: number
   selectedTodoId: number | null
   setSelectedTodoId: Dispatch<SetStateAction<number | null>>
+  setSessions: Dispatch<SetStateAction<TimerSession[]>>
   setTodos: Dispatch<SetStateAction<Todo[]>>
   todos: Todo[]
 }
 
-function calculateElapsedSeconds(baseSeconds: number, startedAt: number | null, now: number) {
+const DEFAULT_TIMER_SECONDS = 25 * 60
+
+function getElapsedSinceStart(startedAt: number | null, now: number) {
   if (startedAt === null) {
-    return baseSeconds
+    return 0
   }
 
-  const additionalSeconds = Math.max(0, Math.floor((now - startedAt) / 1000))
-  return baseSeconds + additionalSeconds
+  return Math.max(0, Math.floor((now - startedAt) / 1000))
 }
 
 export function useTodoTimer({
+  initialActiveSessionStartedAt,
   initialRunningTodoId,
   initialStartedAt,
+  initialTimerDurationSec,
+  initialTimerRemainingSec,
   initialTodayFocusDateKey,
   initialTodayFocusSec,
   selectedTodoId,
   setSelectedTodoId,
+  setSessions,
   setTodos,
   todos,
 }: UseTodoTimerParams) {
   const currentDateKey = getLocalDateKey(Date.now())
   const [runningTodoId, setRunningTodoId] = useState<number | null>(initialRunningTodoId)
   const [startedAt, setStartedAt] = useState<number | null>(initialStartedAt)
+  const [activeSessionStartedAt, setActiveSessionStartedAt] = useState<number | null>(
+    initialActiveSessionStartedAt,
+  )
+  const [timerDurationSec, setTimerDurationSec] = useState(
+    initialTimerDurationSec > 0 ? initialTimerDurationSec : DEFAULT_TIMER_SECONDS,
+  )
+  const [timerRemainingSec, setTimerRemainingSec] = useState(
+    initialTimerRemainingSec >= 0 ? initialTimerRemainingSec : DEFAULT_TIMER_SECONDS,
+  )
   const [todayFocusDateKey, setTodayFocusDateKey] = useState(
     initialTodayFocusDateKey === currentDateKey ? initialTodayFocusDateKey : currentDateKey,
   )
@@ -43,6 +63,16 @@ export function useTodoTimer({
     initialTodayFocusDateKey === currentDateKey ? initialTodayFocusSec : 0,
   )
   const [now, setNow] = useState(() => Date.now())
+
+  const elapsedSinceStart = getElapsedSinceStart(startedAt, now)
+  const activeRunElapsedSec =
+    runningTodoId !== null && startedAt !== null
+      ? Math.min(timerRemainingSec, elapsedSinceStart)
+      : 0
+  const displayedRemainingSec =
+    runningTodoId !== null && startedAt !== null
+      ? Math.max(0, timerRemainingSec - activeRunElapsedSec)
+      : timerRemainingSec
 
   useEffect(() => {
     const nextDateKey = getLocalDateKey(now)
@@ -69,15 +99,22 @@ export function useTodoTimer({
     }
   }, [runningTodoId, startedAt])
 
-  const commitRunningTime = (targetTodoId: number) => {
+  const commitRunningTime = (targetTodoId: number, shouldCreateSession = false) => {
     if (runningTodoId !== targetTodoId || startedAt === null) {
-      return
+      return 0
     }
 
     const commitTime = Date.now()
-    const elapsedSeconds = calculateElapsedSeconds(0, startedAt, commitTime)
+    const targetTodo = todos.find((todo) => todo.id === targetTodoId)
+    const elapsedSeconds = Math.min(
+      timerRemainingSec,
+      getElapsedSinceStart(startedAt, commitTime),
+    )
     const nextDateKey = getLocalDateKey(commitTime)
-    const todayElapsedSeconds = getTodayElapsedSeconds(startedAt, commitTime)
+    const todayElapsedSeconds = Math.min(
+      elapsedSeconds,
+      getTodayElapsedSeconds(startedAt, commitTime),
+    )
 
     setTodos((currentTodos) =>
       currentTodos.map((todo) =>
@@ -94,16 +131,39 @@ export function useTodoTimer({
       (todayFocusDateKey === nextDateKey ? currentFocusSec : 0) + todayElapsedSeconds,
     )
 
+    if (shouldCreateSession && targetTodo && activeSessionStartedAt !== null) {
+      const completedSession = createTimerSession({
+        completedAt: commitTime,
+        durationSec: timerDurationSec,
+        startedAt: activeSessionStartedAt,
+        todo: targetTodo,
+      })
+
+      setSessions((currentSessions) => [completedSession, ...currentSessions])
+    }
+
+    setTimerRemainingSec(Math.max(0, timerRemainingSec - elapsedSeconds))
     setStartedAt(null)
+    setActiveSessionStartedAt(shouldCreateSession ? null : activeSessionStartedAt)
     setNow(commitTime)
+
+    return elapsedSeconds
   }
+
+  useEffect(() => {
+    if (runningTodoId === null || startedAt === null || displayedRemainingSec > 0) {
+      return
+    }
+
+    commitRunningTime(runningTodoId, true)
+    setRunningTodoId(null)
+    setTimerRemainingSec(timerDurationSec)
+  }, [displayedRemainingSec, runningTodoId, startedAt])
 
   const displayedElapsedById = Object.fromEntries(
     todos.map((todo) => {
       const displayedElapsed =
-        todo.id === runningTodoId
-          ? calculateElapsedSeconds(todo.totalElapsedSec, startedAt, now)
-          : todo.totalElapsedSec
+        todo.id === runningTodoId ? todo.totalElapsedSec + activeRunElapsedSec : todo.totalElapsedSec
 
       return [todo.id, displayedElapsed]
     }),
@@ -112,10 +172,19 @@ export function useTodoTimer({
   const displayedTodayFocusSec =
     runningTodoId !== null && startedAt !== null
       ? (todayFocusDateKey === getLocalDateKey(now) ? todayFocusSec : 0) +
-        getTodayElapsedSeconds(startedAt, now)
+        Math.min(activeRunElapsedSec, getTodayElapsedSeconds(startedAt, now))
       : todayFocusDateKey === getLocalDateKey(now)
         ? todayFocusSec
         : 0
+
+  const handleTimerDurationChange = (durationSeconds: number) => {
+    if (runningTodoId !== null) {
+      return
+    }
+
+    setTimerDurationSec(durationSeconds)
+    setTimerRemainingSec(durationSeconds)
+  }
 
   const handleStartTimer = () => {
     if (selectedTodoId === null) {
@@ -130,10 +199,15 @@ export function useTodoTimer({
       return
     }
 
+    const nextRemainingSec = timerRemainingSec > 0 ? timerRemainingSec : timerDurationSec
+    const startTime = Date.now()
+
+    setTimerRemainingSec(nextRemainingSec)
     setRunningTodoId(selectedTodoId)
     setSelectedTodoId(selectedTodoId)
-    setStartedAt(Date.now())
-    setNow(Date.now())
+    setStartedAt(startTime)
+    setActiveSessionStartedAt(activeSessionStartedAt ?? startTime)
+    setNow(startTime)
   }
 
   const handlePauseTimer = () => {
@@ -145,19 +219,23 @@ export function useTodoTimer({
     setRunningTodoId(null)
   }
 
-  const handleStopTimer = () => {
-    if (runningTodoId === null) {
-      return
+  const handleResetTimer = () => {
+    if (runningTodoId !== null) {
+      commitRunningTime(runningTodoId)
+      setRunningTodoId(null)
     }
 
-    commitRunningTime(runningTodoId)
-    setRunningTodoId(null)
+    setTimerRemainingSec(timerDurationSec)
+    setStartedAt(null)
+    setActiveSessionStartedAt(null)
+    setNow(Date.now())
   }
 
   const handleRemoveTimerTarget = (todoId: number) => {
     if (runningTodoId === todoId) {
       setRunningTodoId(null)
       setStartedAt(null)
+      setActiveSessionStartedAt(null)
     }
   }
 
@@ -168,18 +246,25 @@ export function useTodoTimer({
 
     commitRunningTime(todoId)
     setRunningTodoId(null)
+    setActiveSessionStartedAt(null)
   }
 
   return {
+    activeRunElapsedSec,
+    activeSessionStartedAt,
     displayedElapsedById,
+    displayedRemainingSec,
     displayedTodayFocusSec,
     handleCompleteTimerTarget,
     handlePauseTimer,
     handleRemoveTimerTarget,
+    handleResetTimer,
     handleStartTimer,
-    handleStopTimer,
+    handleTimerDurationChange,
     runningTodoId,
     startedAt,
+    timerDurationSec,
+    timerRemainingSec,
     todayFocusDateKey,
     todayFocusSec,
   }

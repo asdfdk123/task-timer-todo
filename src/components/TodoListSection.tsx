@@ -58,8 +58,8 @@ export function TodoListSection({
   return (
     <section className="panel todo-section">
       <div className="section-heading">
-        <p className="section-label">Todo List</p>
-        <h2>Your Tasks</h2>
+        <p className="section-label">할 일 목록</p>
+        <h2>오늘의 할 일</h2>
       </div>
 
       <form className="todo-create-form" onSubmit={handleSubmit}>
@@ -67,55 +67,55 @@ export function TodoListSection({
           type="text"
           value={newTitle}
           onChange={(event) => setNewTitle(event.target.value)}
-          placeholder="Add a new task"
-          aria-label="Add a new task"
+          placeholder="새 할 일을 입력하세요"
+          aria-label="새 할 일 입력"
         />
-        <button type="submit">Add Task</button>
+        <button type="submit">할 일 추가</button>
       </form>
 
-      <div className="todo-toolbar" aria-label="Todo filters">
+      <div className="todo-toolbar" aria-label="할 일 필터">
         <div className="filter-group">
           <button
             type="button"
             className={filter === 'all' ? 'filter-chip active' : 'filter-chip'}
             onClick={() => setFilter('all')}
           >
-            All
+            전체
           </button>
           <button
             type="button"
             className={filter === 'active' ? 'filter-chip active' : 'filter-chip'}
             onClick={() => setFilter('active')}
           >
-            In Progress
+            진행중
           </button>
           <button
             type="button"
             className={filter === 'completed' ? 'filter-chip active' : 'filter-chip'}
             onClick={() => setFilter('completed')}
           >
-            Completed
+            완료
           </button>
         </div>
         <span className="filter-caption">
-          {filteredTodos.length} item{filteredTodos.length === 1 ? '' : 's'}
+          {filteredTodos.length}개 표시 중
         </span>
       </div>
 
       {filteredTodos.length === 0 ? (
         <div className="empty-state">
-          <p className="section-label">No Tasks</p>
+          <p className="section-label">표시할 할 일이 없습니다</p>
           <strong>
             {filter === 'completed'
-              ? 'No completed tasks yet.'
+              ? '아직 완료한 할 일이 없습니다.'
               : filter === 'active'
-                ? 'No tasks in progress right now.'
-                : 'Add your first task to get started.'}
+                ? '현재 진행 중인 할 일이 없습니다.'
+                : '첫 번째 할 일을 추가해 보세요.'}
           </strong>
           <span>
             {filter === 'all'
-              ? 'Use the form above to create a new todo.'
-              : 'Try switching filters or update a task state.'}
+              ? '위 입력창에서 새 할 일을 만들 수 있습니다.'
+              : '다른 필터를 선택하거나 할 일 상태를 변경해 보세요.'}
           </span>
         </div>
       ) : (
