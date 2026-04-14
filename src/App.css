@@ -490,7 +490,7 @@ button:focus-visible {
 }
 
 .todo-main {
-  align-items: flex-start;
+  align-items: center;
   flex: 1;
   gap: 10px;
 }
@@ -505,6 +505,7 @@ button:focus-visible {
   background: transparent;
   text-align: left;
   cursor: pointer;
+  min-width: 0;
 }
 
 .todo-title {
@@ -554,7 +555,8 @@ button:focus-visible {
 
 .todo-toggle {
   align-items: center;
-  gap: 10px;
+  flex: 0 0 auto;
+  gap: 8px;
 }
 
 .todo-toggle input {
@@ -569,25 +571,29 @@ button:focus-visible {
   gap: 10px;
 }
 
-.live-indicator,
 .status-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
+  min-width: 52px;
   border-radius: 999px;
-  padding: 5px 9px;
-  font-size: 0.78rem;
+  padding: 5px 10px;
+  font-size: 0.76rem;
   font-weight: 800;
-}
-
-.live-indicator {
-  color: hsl(var(--primary));
-  background: hsl(4 72% 95%);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .status-badge.done {
   color: hsl(var(--success));
   background: hsl(145 50% 92%);
+}
+
+.status-badge.running {
+  color: hsl(var(--primary));
+  background: hsl(4 72% 95%);
 }
 
 .status-badge.pending {

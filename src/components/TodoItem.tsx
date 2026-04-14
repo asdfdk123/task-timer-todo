@@ -44,6 +44,9 @@ export function TodoItem({
     setIsEditing(false)
   }
 
+  const statusLabel = isRunning ? '진행중' : todo.completed ? '완료' : '대기'
+  const statusClassName = isRunning ? 'running' : todo.completed ? 'done' : 'pending'
+
   return (
     <li
       className={`todo-item ${isSelected ? 'selected' : ''} ${todo.completed ? 'is-completed' : ''} ${isRunning ? 'is-running' : ''} ${isNew ? 'is-new' : ''}`}
@@ -56,10 +59,10 @@ export function TodoItem({
             onChange={() => onToggle(todo.id)}
           />
           <span
-            className={`status-badge ${todo.completed ? 'done' : 'pending'}`}
-            aria-label={todo.completed ? '완료됨' : '진행 중'}
+            className={`status-badge ${statusClassName}`}
+            aria-label={`할 일 상태: ${statusLabel}`}
           >
-            {todo.completed ? '완료' : '진행중'}
+            {statusLabel}
           </span>
         </label>
 
@@ -85,7 +88,6 @@ export function TodoItem({
             <span className={todo.completed ? 'todo-title completed' : 'todo-title'}>
               {todo.title}
             </span>
-            {isRunning ? <span className="live-indicator">진행 중</span> : null}
           </button>
         )}
       </div>

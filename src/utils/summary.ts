@@ -34,7 +34,7 @@ export function buildSummaryCards({
     },
     {
       label: '상태',
-      value: isRunning ? '진행 중' : '대기 중',
+      value: isRunning ? '진행중' : '대기',
       description: activeTaskTitle ?? '현재 작업 없음',
       emphasizeText: true,
     },

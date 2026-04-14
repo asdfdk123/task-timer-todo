@@ -1,39 +1,43 @@
-import type { TimerSession } from '../types/session'
+import type { TimerSession } from "../types/session";
 import {
   getRecentSessions,
   getSessionsGroupedByDate,
   getSessionsInCurrentWeek,
   getTotalSessionDuration,
   getWeekdaySummary,
-} from '../utils/sessionSelectors'
-import { formatReadableDuration, getLocalDateKey } from '../utils/time'
+} from "../utils/sessionSelectors";
+import { formatReadableDuration, getLocalDateKey } from "../utils/time";
 
 type RecordsPageProps = {
-  sessions: TimerSession[]
-}
+  sessions: TimerSession[];
+};
 
 function formatSessionTime(timestamp: number) {
-  return new Intl.DateTimeFormat('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(timestamp))
+  return new Intl.DateTimeFormat("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
 }
 
 function formatSessionDate(date: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(`${date}T00:00:00`))
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+  }).format(new Date(`${date}T00:00:00`));
 }
 
 export function RecordsPage({ sessions }: RecordsPageProps) {
-  const todayKey = getLocalDateKey(Date.now())
-  const todaySessions = sessions.filter((session) => session.date === todayKey)
-  const weekSessions = getSessionsInCurrentWeek(sessions)
-  const weekdaySummary = getWeekdaySummary(weekSessions)
-  const recentSessions = getRecentSessions(sessions, 6)
-  const dateGroups = getSessionsGroupedByDate(sessions).slice(0, 5)
-  const maxWeekdaySec = Math.max(...weekdaySummary.map((day) => day.totalSec), 1)
+  // eslint-disable-next-line react-hooks/purity
+  const todayKey = getLocalDateKey(Date.now());
+  const todaySessions = sessions.filter((session) => session.date === todayKey);
+  const weekSessions = getSessionsInCurrentWeek(sessions);
+  const weekdaySummary = getWeekdaySummary(weekSessions);
+  const recentSessions = getRecentSessions(sessions, 6);
+  const dateGroups = getSessionsGroupedByDate(sessions).slice(0, 5);
+  const maxWeekdaySec = Math.max(
+    ...weekdaySummary.map((day) => day.totalSec),
+    1,
+  );
 
   return (
     <>
@@ -45,12 +49,16 @@ export function RecordsPage({ sessions }: RecordsPageProps) {
       <section className="record-summary-grid" aria-label="집중 요약">
         <article className="record-summary-card panel">
           <span className="section-label">오늘</span>
-          <strong>{formatReadableDuration(getTotalSessionDuration(todaySessions))}</strong>
+          <strong>
+            {formatReadableDuration(getTotalSessionDuration(todaySessions))}
+          </strong>
           <p>완료 세션 {todaySessions.length}개</p>
         </article>
         <article className="record-summary-card panel">
           <span className="section-label">이번주</span>
-          <strong>{formatReadableDuration(getTotalSessionDuration(weekSessions))}</strong>
+          <strong>
+            {formatReadableDuration(getTotalSessionDuration(weekSessions))}
+          </strong>
           <p>완료 세션 {weekSessions.length}개</p>
         </article>
       </section>
@@ -86,7 +94,9 @@ export function RecordsPage({ sessions }: RecordsPageProps) {
         </div>
 
         {recentSessions.length === 0 ? (
-          <p className="history-empty">타이머를 끝까지 완료하면 첫 기록이 여기에 표시됩니다.</p>
+          <p className="history-empty">
+            타이머를 끝까지 완료하면 첫 기록이 여기에 표시됩니다.
+          </p>
         ) : (
           <ul className="session-list">
             {recentSessions.map((session) => (
@@ -94,7 +104,8 @@ export function RecordsPage({ sessions }: RecordsPageProps) {
                 <div>
                   <strong>{session.todoTitle}</strong>
                   <span>
-                    {formatSessionDate(session.date)} · {formatSessionTime(session.startedAt)}-
+                    {formatSessionDate(session.date)} ·{" "}
+                    {formatSessionTime(session.startedAt)}-
                     {formatSessionTime(session.completedAt)}
                   </span>
                 </div>
@@ -112,7 +123,9 @@ export function RecordsPage({ sessions }: RecordsPageProps) {
         </div>
 
         {dateGroups.length === 0 ? (
-          <p className="history-empty">완료한 세션이 생기면 날짜별 기록이 표시됩니다.</p>
+          <p className="history-empty">
+            완료한 세션이 생기면 날짜별 기록이 표시됩니다.
+          </p>
         ) : (
           <ul className="date-group-list">
             {dateGroups.map((group) => (
@@ -128,5 +141,5 @@ export function RecordsPage({ sessions }: RecordsPageProps) {
         )}
       </section>
     </>
-  )
+  );
 }
