@@ -95,6 +95,7 @@
     inset 0 8px 22px hsl(20 20% 25% / 0.06),
     0 24px 50px hsl(4 42% 42% / 0.16);
   touch-action: none;
+  user-select: none;
 }
 
 .interactive-timer-face {
@@ -117,8 +118,20 @@
 
 .interactive-timer-sector {
   fill: hsl(var(--timer-fill));
-  opacity: 0.96;
-  transition: opacity 0.2s ease;
+  opacity: 0.9;
+  filter: drop-shadow(0 6px 10px hsl(4 45% 34% / 0.14));
+  transition:
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+
+.interactive-timer.idle .interactive-timer-sector,
+.interactive-timer.dragging .interactive-timer-sector {
+  opacity: 0.82;
+}
+
+.interactive-timer.dragging .interactive-timer-sector {
+  filter: drop-shadow(0 9px 16px hsl(4 45% 34% / 0.22));
 }
 
 .interactive-timer.paused .interactive-timer-sector {
@@ -130,9 +143,26 @@
 }
 
 .interactive-timer-inner {
-  fill: hsl(var(--card));
+  fill: hsl(var(--card) / 0.92);
   stroke: hsl(0 0% 100% / 0.7);
   stroke-width: 1;
+}
+
+.interactive-timer-tick {
+  stroke: hsl(var(--foreground) / 0.16);
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.interactive-timer-handle {
+  fill: hsl(var(--card));
+  stroke: hsl(var(--primary));
+  stroke-width: 3;
+  filter: drop-shadow(0 4px 8px hsl(20 15% 15% / 0.16));
+}
+
+.interactive-timer.finished .interactive-timer-handle {
+  display: none;
 }
 
 .interactive-timer-marker {
@@ -147,8 +177,14 @@
   display: grid;
   gap: 4px;
   width: 150px;
+  padding: 13px 10px;
+  border: 1px solid hsl(var(--border) / 0.72);
+  border-radius: 24px;
+  background: hsl(var(--card) / 0.86);
+  box-shadow: 0 10px 24px hsl(20 20% 20% / 0.08);
   text-align: center;
   pointer-events: none;
+  backdrop-filter: blur(8px);
 }
 
 .interactive-timer-center span {
@@ -160,7 +196,7 @@
 
 .interactive-timer-center strong {
   color: hsl(var(--foreground));
-  font-size: 2.1rem;
+  font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.04em;
 }
@@ -273,6 +309,7 @@ button:disabled {
 
 .todo-toolbar,
 .todo-create-form,
+.todo-create-row,
 .todo-item,
 .todo-main,
 .todo-side,
@@ -294,7 +331,45 @@ button:disabled {
   gap: 10px;
 }
 
+.todo-create-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, hsl(var(--card)) 0%, hsl(4 70% 98%) 100%);
+}
+
+.todo-create-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.todo-create-copy strong {
+  color: hsl(var(--foreground));
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.todo-create-copy p {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9rem;
+}
+
+.todo-create-row {
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  background: hsl(var(--card));
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.72);
+}
+
 .todo-create-form input,
+.todo-create-row input,
 .todo-edit-form input {
   flex: 1;
   min-width: 0;
@@ -305,11 +380,51 @@ button:disabled {
   background: hsl(var(--background));
 }
 
+.todo-create-row input {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 14px;
+  background: transparent;
+}
+
+.todo-create-row input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.78);
+}
+
+.todo-create-row:focus-within {
+  border-color: hsl(var(--primary) / 0.52);
+  box-shadow:
+    0 0 0 4px hsl(var(--ring) / 0.12),
+    inset 0 1px 0 hsl(0 0% 100% / 0.72);
+}
+
+.todo-create-row button {
+  flex: 0 0 auto;
+  border: 1px solid hsl(var(--primary));
+  border-radius: 999px;
+  padding: 11px 17px;
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary));
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.todo-create-row button:disabled {
+  border-color: hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted));
+}
+
 .todo-create-form input:focus,
+.todo-create-row input:focus,
 .todo-edit-form input:focus,
 button:focus-visible {
   outline: 3px solid hsl(var(--ring) / 0.22);
   outline-offset: 2px;
+}
+
+.todo-create-row input:focus {
+  outline: 0;
 }
 
 .todo-list,
@@ -323,6 +438,7 @@ button:focus-visible {
 }
 
 .todo-item {
+  position: relative;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
@@ -330,6 +446,20 @@ button:focus-visible {
   border: 1px solid hsl(var(--border));
   border-radius: 22px;
   background: hsl(var(--background));
+  overflow: hidden;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.todo-item::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: hsl(var(--border));
+  content: '';
 }
 
 .todo-item.selected {
@@ -342,8 +472,21 @@ button:focus-visible {
   border-color: hsl(var(--primary) / 0.62);
 }
 
+.todo-item.is-running::before {
+  background: hsl(var(--primary));
+}
+
 .todo-item.is-completed {
   background: hsl(var(--secondary));
+}
+
+.todo-item.is-completed::before {
+  background: hsl(var(--success));
+  opacity: 0.72;
+}
+
+.todo-item.is-new {
+  animation: todo-added 0.9s ease;
 }
 
 .todo-main {
@@ -373,6 +516,20 @@ button:focus-visible {
 .todo-title.completed {
   color: hsl(var(--muted-foreground));
   text-decoration: line-through;
+}
+
+@keyframes todo-added {
+  0% {
+    border-color: hsl(var(--primary) / 0.72);
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+    transform: translateY(-2px);
+  }
+
+  100% {
+    border-color: hsl(var(--border));
+    box-shadow: none;
+    transform: translateY(0);
+  }
 }
 
 .todo-meta,
@@ -577,6 +734,7 @@ button:focus-visible {
   .today-record-card,
   .todo-toolbar,
   .todo-create-form,
+  .todo-create-row,
   .todo-item,
   .todo-main,
   .todo-toggle {
@@ -587,6 +745,15 @@ button:focus-visible {
   .todo-side,
   .todo-meta {
     align-items: flex-start;
+  }
+
+  .todo-create-row {
+    border-radius: 22px;
+  }
+
+  .todo-create-row input,
+  .todo-create-row button {
+    width: 100%;
   }
 
   .record-summary-grid {

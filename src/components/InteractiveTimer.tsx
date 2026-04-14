@@ -2,10 +2,12 @@ import { useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
 
 const MAX_MINUTES = 60
-const SNAP_MINUTES = 5
+const SNAP_MINUTES = 1
 const SIZE = 280
 const CENTER = SIZE / 2
 const RADIUS = 126
+const TICK_RADIUS = 116
+const HANDLE_RADIUS = 118
 
 type InteractiveTimerProps = {
   durationSeconds: number
@@ -24,6 +26,10 @@ function polarToCartesian(angle: number) {
     x: CENTER + RADIUS * Math.sin(angle),
     y: CENTER - RADIUS * Math.cos(angle),
   }
+}
+
+function clampRatio(ratio: number) {
+  return Math.min(1, Math.max(0, ratio))
 }
 
 function createSectorPath(ratio: number) {
@@ -54,6 +60,26 @@ function createSectorPath(ratio: number) {
   ].join(' ')
 }
 
+function getVisualRatio({
+  durationSeconds,
+  remainingSeconds,
+  state,
+}: {
+  durationSeconds: number
+  remainingSeconds: number
+  state: InteractiveTimerProps['state']
+}) {
+  if (state === 'finished') {
+    return 0
+  }
+
+  if (state === 'idle') {
+    return clampRatio(durationSeconds / (MAX_MINUTES * 60))
+  }
+
+  return durationSeconds > 0 ? clampRatio(remainingSeconds / durationSeconds) : 0
+}
+
 function getMinutesFromPointer(event: PointerEvent<SVGSVGElement>, svg: SVGSVGElement) {
   const rect = svg.getBoundingClientRect()
   const x = event.clientX - rect.left - rect.width / 2
@@ -79,9 +105,14 @@ export function InteractiveTimer({
 }: InteractiveTimerProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const remainingRatio = durationSeconds > 0 ? remainingSeconds / durationSeconds : 0
-  const sectorPath = createSectorPath(Math.min(1, Math.max(0, remainingRatio)))
+  const visualRatio = getVisualRatio({
+    durationSeconds,
+    remainingSeconds,
+    state,
+  })
+  const sectorPath = createSectorPath(visualRatio)
   const selectedMinutes = Math.max(SNAP_MINUTES, Math.round(durationSeconds / 60))
+  const tickAngles = Array.from({ length: 12 }, (_, index) => index * (Math.PI / 6))
 
   const updateDurationFromPointer = (event: PointerEvent<SVGSVGElement>) => {
     if (!isInteractive || isRunning || svgRef.current === null) {
@@ -97,6 +128,7 @@ export function InteractiveTimer({
       return
     }
 
+    event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
     setIsDragging(true)
     updateDurationFromPointer(event)
@@ -107,6 +139,7 @@ export function InteractiveTimer({
       return
     }
 
+    event.preventDefault()
     updateDurationFromPointer(event)
   }
 
@@ -120,7 +153,7 @@ export function InteractiveTimer({
 
   return (
     <div
-      className={`interactive-timer ${state}`}
+      className={`interactive-timer ${state}${isDragging ? ' dragging' : ''}`}
       aria-label={`타이머가 ${selectedMinutes}분으로 설정되었습니다. 남은 시간은 ${remainingTime}입니다.`}
       role="group"
     >
@@ -128,6 +161,7 @@ export function InteractiveTimer({
         ref={svgRef}
         className="interactive-timer-face"
         viewBox={`0 0 ${SIZE} ${SIZE}`}
+        onLostPointerCapture={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -135,8 +169,37 @@ export function InteractiveTimer({
         aria-hidden="true"
       >
         <circle className="interactive-timer-dial" cx={CENTER} cy={CENTER} r={RADIUS} />
+        {tickAngles.map((angle) => {
+          const outer = {
+            x: CENTER + RADIUS * Math.sin(angle),
+            y: CENTER - RADIUS * Math.cos(angle),
+          }
+          const inner = {
+            x: CENTER + TICK_RADIUS * Math.sin(angle),
+            y: CENTER - TICK_RADIUS * Math.cos(angle),
+          }
+
+          return (
+            <line
+              key={angle}
+              className="interactive-timer-tick"
+              x1={outer.x}
+              y1={outer.y}
+              x2={inner.x}
+              y2={inner.y}
+            />
+          )
+        })}
         {sectorPath ? <path className="interactive-timer-sector" d={sectorPath} /> : null}
-        <circle className="interactive-timer-inner" cx={CENTER} cy={CENTER} r="68" />
+        {visualRatio > 0 ? (
+          <circle
+            className="interactive-timer-handle"
+            cx={CENTER + HANDLE_RADIUS * Math.sin(visualRatio * Math.PI * 2)}
+            cy={CENTER - HANDLE_RADIUS * Math.cos(visualRatio * Math.PI * 2)}
+            r="7"
+          />
+        ) : null}
+        <circle className="interactive-timer-inner" cx={CENTER} cy={CENTER} r="54" />
         <line className="interactive-timer-marker" x1={CENTER} y1="10" x2={CENTER} y2="28" />
       </svg>
 

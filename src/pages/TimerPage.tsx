@@ -17,7 +17,7 @@ type TimerPageProps = {
   timerDurationSec: number
   todayFocusSec: number
   todos: Todo[]
-  onAddTodo: (title: string) => void
+  onAddTodo: (title: string) => number
   onDeleteTodo: (id: number) => void
   onDurationChange: (durationSeconds: number) => void
   onPause: () => void

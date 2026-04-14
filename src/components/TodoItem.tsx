@@ -6,6 +6,7 @@ type TodoItemProps = {
   todo: Todo
   displayedElapsedSec: number
   isRunning: boolean
+  isNew: boolean
   onDelete: (id: number) => void
   onSelect: (id: number) => void
   onToggle: (id: number) => void
@@ -17,6 +18,7 @@ export function TodoItem({
   todo,
   displayedElapsedSec,
   isRunning,
+  isNew,
   onDelete,
   onSelect,
   onToggle,
@@ -44,7 +46,7 @@ export function TodoItem({
 
   return (
     <li
-      className={`todo-item ${isSelected ? 'selected' : ''} ${todo.completed ? 'is-completed' : ''} ${isRunning ? 'is-running' : ''}`}
+      className={`todo-item ${isSelected ? 'selected' : ''} ${todo.completed ? 'is-completed' : ''} ${isRunning ? 'is-running' : ''} ${isNew ? 'is-new' : ''}`}
     >
       <div className="todo-main">
         <label className="todo-toggle">

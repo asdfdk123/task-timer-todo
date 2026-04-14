@@ -70,7 +70,7 @@ function App() {
 
     const fallbackTodo =
       todos.find((todo) => !todo.completed) ?? todos[0] ?? null;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setSelectedTodoId(fallbackTodo?.id ?? null);
   }, [selectedTodoId, todos]);
 
@@ -124,7 +124,12 @@ function App() {
   const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null;
   const runningTodo = todos.find((todo) => todo.id === runningTodoId) ?? null;
   const activeCardTodo = runningTodo ?? selectedTodo;
-  const todaySessions = getSessionsByDate(sessions, getLocalDateKey(Date.now()));
+
+  const todaySessions = getSessionsByDate(
+    sessions,
+    // eslint-disable-next-line react-hooks/purity
+    getLocalDateKey(Date.now()),
+  );
 
   const handleAddTodo = (title: string) => {
     const nextTodo: Todo = {
@@ -136,6 +141,8 @@ function App() {
 
     setTodos((currentTodos) => [nextTodo, ...currentTodos]);
     setSelectedTodoId(nextTodo.id);
+
+    return nextTodo.id;
   };
 
   const handleUpdateTodo = (id: number, title: string) => {

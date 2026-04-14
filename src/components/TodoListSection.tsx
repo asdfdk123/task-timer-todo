@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
+import { TodoCreateForm } from './TodoCreateForm'
 import { TodoItem } from './TodoItem'
 import type { Todo } from '../types/todo'
 
@@ -9,7 +10,7 @@ type TodoListSectionProps = {
   runningTodoId: number | null
   selectedTodoId: number | null
   todos: Todo[]
-  onAddTodo: (title: string) => void
+  onAddTodo: (title: string) => number
   onDeleteTodo: (id: number) => void
   onSelectTodo: (id: number) => void
   onToggleTodo: (id: number) => void
@@ -27,20 +28,28 @@ export function TodoListSection({
   onToggleTodo,
   onUpdateTodo,
 }: TodoListSectionProps) {
-  const [newTitle, setNewTitle] = useState('')
   const [filter, setFilter] = useState<TodoFilter>('all')
+  const [recentlyAddedTodoId, setRecentlyAddedTodoId] = useState<number | null>(null)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    const trimmedTitle = newTitle.trim()
-
-    if (!trimmedTitle) {
+  useEffect(() => {
+    if (recentlyAddedTodoId === null) {
       return
     }
 
-    onAddTodo(trimmedTitle)
-    setNewTitle('')
+    const timerId = window.setTimeout(() => {
+      setRecentlyAddedTodoId(null)
+    }, 900)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
+  }, [recentlyAddedTodoId])
+
+  const handleAddTodo = (title: string) => {
+    const newTodoId = onAddTodo(title)
+
+    setFilter('all')
+    setRecentlyAddedTodoId(newTodoId)
   }
 
   const filteredTodos = todos.filter((todo) => {
@@ -62,16 +71,7 @@ export function TodoListSection({
         <h2>오늘의 할 일</h2>
       </div>
 
-      <form className="todo-create-form" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={newTitle}
-          onChange={(event) => setNewTitle(event.target.value)}
-          placeholder="새 할 일을 입력하세요"
-          aria-label="새 할 일 입력"
-        />
-        <button type="submit">할 일 추가</button>
-      </form>
+      <TodoCreateForm onAddTodo={handleAddTodo} />
 
       <div className="todo-toolbar" aria-label="할 일 필터">
         <div className="filter-group">
@@ -107,15 +107,15 @@ export function TodoListSection({
           <p className="section-label">표시할 할 일이 없습니다</p>
           <strong>
             {filter === 'completed'
-              ? '아직 완료한 할 일이 없습니다.'
+              ? '완료한 할 일이 생기면 여기에 모아둘게요.'
               : filter === 'active'
-                ? '현재 진행 중인 할 일이 없습니다.'
-                : '첫 번째 할 일을 추가해 보세요.'}
+                ? '지금 바로 집중할 할 일이 없습니다.'
+                : '오늘 집중할 첫 할 일을 적어보세요.'}
           </strong>
           <span>
             {filter === 'all'
-              ? '위 입력창에서 새 할 일을 만들 수 있습니다.'
-              : '다른 필터를 선택하거나 할 일 상태를 변경해 보세요.'}
+              ? '위의 빠른 추가 영역에서 바로 등록할 수 있어요.'
+              : '필터를 바꾸거나 할 일의 완료 상태를 조정해 보세요.'}
           </span>
         </div>
       ) : (
@@ -125,6 +125,7 @@ export function TodoListSection({
               key={todo.id}
               displayedElapsedSec={displayedElapsedById[todo.id] ?? todo.totalElapsedSec}
               isRunning={runningTodoId === todo.id}
+              isNew={recentlyAddedTodoId === todo.id}
               isSelected={selectedTodoId === todo.id}
               todo={todo}
               onDelete={onDeleteTodo}
