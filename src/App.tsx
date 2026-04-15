@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { AppNotice } from "./components/AppNotice";
 import { BottomTabBar } from "./components/BottomTabBar";
+import { CompletionToast } from "./components/CompletionToast";
 import { FeedbackCard } from "./components/FeedbackCard";
 import { useTodoAppStorage } from "./hooks/useTodoAppStorage";
+import { useTimerCompletionFeedback } from "./hooks/useTimerCompletionFeedback";
 import { useTodoTimer } from "./hooks/useTodoTimer";
 import { RecordsPage } from "./pages/RecordsPage";
 import { TimerPage } from "./pages/TimerPage";
@@ -63,6 +65,15 @@ function App() {
   const [selectedTodoId, setSelectedTodoId] = useState<number | null>(
     initialState.selectedTodoId,
   );
+  const {
+    completionMessage,
+    isSoundEnabled,
+    notificationPermission,
+    notifyCompletion,
+    primeCompletionSound,
+    requestNotificationPermission,
+    setIsSoundEnabled,
+  } = useTimerCompletionFeedback();
 
   useEffect(() => {
     trackEvent("app_opened");
@@ -107,6 +118,12 @@ function App() {
     initialTimerRemainingSec: initialState.timerRemainingSec,
     initialTodayFocusDateKey: initialState.todayFocusDateKey,
     initialTodayFocusSec: initialState.todayFocusSec,
+    onTimerCompleted: ({ durationSec, todoTitle }) => {
+      notifyCompletion({
+        durationMinutes: Math.round(durationSec / 60),
+        todoTitle,
+      });
+    },
     selectedTodoId,
     setSelectedTodoId,
     setSessions,
@@ -226,6 +243,7 @@ function App() {
       durationMinutes: Math.round(timerDurationSec / 60),
       todoId: activeCardTodo.id,
     });
+    void primeCompletionSound();
     handleStartTimer();
   };
 
@@ -264,6 +282,8 @@ function App() {
           <TimerPage
             displayedElapsedById={displayedElapsedById}
             displayedRemainingSec={displayedRemainingSec}
+            isSoundEnabled={isSoundEnabled}
+            notificationPermission={notificationPermission}
             runningTodoId={runningTodoId}
             selectedTodo={activeCardTodo}
             selectedTodoId={selectedTodoId}
@@ -275,9 +295,13 @@ function App() {
             onDeleteTodo={handleDeleteTodo}
             onDurationChange={handleDurationChange}
             onPause={handlePause}
+            onRequestNotificationPermission={() => {
+              void requestNotificationPermission();
+            }}
             onReset={handleReset}
             onSelectTodo={handleSelectTodo}
             onStart={handleStart}
+            onToggleSound={setIsSoundEnabled}
             onToggleTodo={handleToggleTodo}
             onUpdateTodo={handleUpdateTodo}
           />
@@ -291,6 +315,7 @@ function App() {
         ) : null}
         <FeedbackCard />
       </div>
+      <CompletionToast message={completionMessage} />
       <BottomTabBar activeTab={activeTab} onChange={handleTabChange} />
     </main>
   );

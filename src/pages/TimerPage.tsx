@@ -1,4 +1,5 @@
 import { InteractiveTimer } from '../components/InteractiveTimer'
+import { TimerFeedbackSettings } from '../components/TimerFeedbackSettings'
 import { TodoListSection } from '../components/TodoListSection'
 import type { Todo } from '../types/todo'
 import { formatDuration, formatReadableDuration } from '../utils/time'
@@ -13,6 +14,8 @@ type TimerPageProps = {
   selectedTodo: Todo | null
   selectedTodoId: number | null
   sessionsTodayCount: number
+  isSoundEnabled: boolean
+  notificationPermission: 'unsupported' | NotificationPermission
   timerDurationSec: number
   todayFocusSec: number
   todos: Todo[]
@@ -20,9 +23,11 @@ type TimerPageProps = {
   onDeleteTodo: (id: number) => void
   onDurationChange: (durationSeconds: number) => void
   onPause: () => void
+  onRequestNotificationPermission: () => void
   onReset: () => void
   onSelectTodo: (id: number) => void
   onStart: () => void
+  onToggleSound: (enabled: boolean) => void
   onToggleTodo: (id: number) => void
   onUpdateTodo: (id: number, title: string) => void
 }
@@ -86,6 +91,8 @@ export function TimerPage({
   selectedTodo,
   selectedTodoId,
   sessionsTodayCount,
+  isSoundEnabled,
+  notificationPermission,
   timerDurationSec,
   todayFocusSec,
   todos,
@@ -93,9 +100,11 @@ export function TimerPage({
   onDeleteTodo,
   onDurationChange,
   onPause,
+  onRequestNotificationPermission,
   onReset,
   onSelectTodo,
   onStart,
+  onToggleSound,
   onToggleTodo,
   onUpdateTodo,
 }: TimerPageProps) {
@@ -206,6 +215,13 @@ export function TimerPage({
         </div>
         <p>완료한 세션 {sessionsTodayCount}개</p>
       </section>
+
+      <TimerFeedbackSettings
+        isSoundEnabled={isSoundEnabled}
+        notificationPermission={notificationPermission}
+        onRequestNotificationPermission={onRequestNotificationPermission}
+        onToggleSound={onToggleSound}
+      />
 
       <TodoListSection
         displayedElapsedById={displayedElapsedById}

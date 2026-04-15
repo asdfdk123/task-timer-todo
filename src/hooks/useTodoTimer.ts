@@ -15,6 +15,11 @@ type UseTodoTimerParams = {
   initialTimerRemainingSec: number
   initialTodayFocusDateKey: string
   initialTodayFocusSec: number
+  onTimerCompleted?: (details: {
+    durationSec: number
+    todoId: number
+    todoTitle: string
+  }) => void
   selectedTodoId: number | null
   setSelectedTodoId: Dispatch<SetStateAction<number | null>>
   setSessions: Dispatch<SetStateAction<TimerSession[]>>
@@ -38,6 +43,7 @@ export function useTodoTimer({
   initialTimerRemainingSec,
   initialTodayFocusDateKey,
   initialTodayFocusSec,
+  onTimerCompleted,
   selectedTodoId,
   setSelectedTodoId,
   setSessions,
@@ -143,6 +149,11 @@ export function useTodoTimer({
       trackEvent('timer_completed', {
         durationMinutes: Math.round(timerDurationSec / 60),
         todoId: targetTodo.id,
+      })
+      onTimerCompleted?.({
+        durationSec: timerDurationSec,
+        todoId: targetTodo.id,
+        todoTitle: targetTodo.title,
       })
     }
 
