@@ -3,7 +3,7 @@ import { TodoCreateForm } from './TodoCreateForm'
 import { TodoItem } from './TodoItem'
 import type { Todo } from '../types/todo'
 
-type TodoFilter = 'all' | 'active' | 'completed'
+type TodoFilter = 'all' | 'incomplete' | 'completed'
 
 type TodoListSectionProps = {
   displayedElapsedById: Record<number, number>
@@ -50,10 +50,12 @@ export function TodoListSection({
 
     setFilter('all')
     setRecentlyAddedTodoId(newTodoId)
+
+    return newTodoId
   }
 
   const filteredTodos = todos.filter((todo) => {
-    if (filter === 'active') {
+    if (filter === 'incomplete') {
       return !todo.completed
     }
 
@@ -84,10 +86,10 @@ export function TodoListSection({
           </button>
           <button
             type="button"
-            className={filter === 'active' ? 'filter-chip active' : 'filter-chip'}
-            onClick={() => setFilter('active')}
+            className={filter === 'incomplete' ? 'filter-chip active' : 'filter-chip'}
+            onClick={() => setFilter('incomplete')}
           >
-            진행중
+            미완료
           </button>
           <button
             type="button"
@@ -108,8 +110,8 @@ export function TodoListSection({
           <strong>
             {filter === 'completed'
               ? '완료한 할 일이 생기면 여기에 모아둘게요.'
-              : filter === 'active'
-                ? '지금 바로 집중할 할 일이 없습니다.'
+              : filter === 'incomplete'
+                ? '아직 남아 있는 할 일이 없습니다.'
                 : '오늘 집중할 첫 할 일을 적어보세요.'}
           </strong>
           <span>

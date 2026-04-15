@@ -24,9 +24,10 @@
 }
 
 .hero-header h1 {
-  font-size: clamp(2rem, 10vw, 2.75rem);
+  font-size: clamp(1.72rem, 8vw, 2.28rem);
   font-weight: 800;
-  letter-spacing: -0.055em;
+  line-height: 1.12;
+  letter-spacing: -0.045em;
 }
 
 .hero-header p,
@@ -39,14 +40,17 @@
 .record-summary-card p {
   margin: 0;
   color: hsl(var(--muted-foreground));
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 .section-label,
 .timer-task span,
 .time-label {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1.25;
   letter-spacing: 0.07em;
   color: hsl(var(--muted-foreground));
 }
@@ -76,8 +80,9 @@
   max-width: 18rem;
   overflow: hidden;
   color: hsl(var(--foreground));
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 800;
+  line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -189,21 +194,24 @@
 
 .interactive-timer-center span {
   color: hsl(var(--primary));
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 800;
+  line-height: 1.2;
   letter-spacing: 0.06em;
 }
 
 .interactive-timer-center strong {
   color: hsl(var(--foreground));
-  font-size: 2rem;
+  font-size: 1.92rem;
   font-weight: 800;
+  line-height: 1.08;
   letter-spacing: -0.04em;
 }
 
 .interactive-timer-center small {
   color: hsl(var(--muted-foreground));
-  font-size: 0.78rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
 }
 
 .quick-chip-row,
@@ -217,6 +225,14 @@
   justify-content: center;
 }
 
+.timer-notice {
+  margin: -8px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .quick-chip,
 .filter-chip,
 .primary-button,
@@ -227,9 +243,12 @@
 .todo-edit-form button {
   border: 1px solid hsl(var(--border));
   border-radius: 999px;
-  padding: 10px 16px;
+  padding: 9px 14px;
   color: hsl(var(--foreground));
   background: hsl(var(--card));
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
   transition:
     transform 0.16s ease,
@@ -278,6 +297,7 @@ button:disabled {
 
 .today-record-card div,
 .record-summary-card,
+.feedback-card,
 .section-heading,
 .todo-section,
 .history-panel,
@@ -286,14 +306,60 @@ button:disabled {
   gap: 12px;
 }
 
+.app-notice {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid hsl(var(--primary) / 0.28);
+  border-radius: 18px;
+  color: hsl(var(--foreground));
+  background: hsl(4 72% 97%);
+}
+
+.app-notice strong {
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.app-notice p,
+.feedback-card p,
+.feedback-message {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.feedback-card {
+  gap: 14px;
+}
+
+.feedback-card strong {
+  color: hsl(var(--foreground));
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.feedback-card button {
+  justify-self: start;
+}
+
+.feedback-message {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: hsl(var(--secondary));
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 .today-record-card strong,
 .record-summary-card strong,
 .history-today-card strong {
   display: block;
   color: hsl(var(--foreground));
-  font-size: 1.75rem;
+  font-size: 1.48rem;
   font-weight: 800;
-  letter-spacing: -0.045em;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
 }
 
 .record-summary-grid {
@@ -348,14 +414,16 @@ button:disabled {
 
 .todo-create-copy strong {
   color: hsl(var(--foreground));
-  font-size: 1.02rem;
+  font-size: 0.96rem;
   font-weight: 800;
+  line-height: 1.35;
 }
 
 .todo-create-copy p {
   margin: 0;
   color: hsl(var(--muted-foreground));
-  font-size: 0.9rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
 }
 
 .todo-create-row {
@@ -378,9 +446,11 @@ button:disabled {
   max-width: 100%;
   border: 1px solid hsl(var(--border));
   border-radius: 18px;
-  padding: 13px 15px;
+  padding: 12px 14px;
   color: hsl(var(--foreground));
   background: hsl(var(--background));
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .todo-edit-form textarea {
@@ -390,10 +460,23 @@ button:disabled {
   resize: none;
 }
 
+.todo-edit-form textarea[aria-invalid='true'] {
+  border-color: hsl(var(--primary) / 0.62);
+  background: hsl(4 72% 97%);
+}
+
+.form-error {
+  margin: -2px 0 0;
+  color: hsl(var(--primary));
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .todo-create-row input {
   border: 0;
   border-radius: 999px;
-  padding: 12px 14px;
+  padding: 11px 13px;
   background: transparent;
 }
 
@@ -412,9 +495,10 @@ button:disabled {
   flex: 0 0 auto;
   border: 1px solid hsl(var(--primary));
   border-radius: 999px;
-  padding: 11px 17px;
+  padding: 10px 15px;
   color: hsl(var(--primary-foreground));
   background: hsl(var(--primary));
+  font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -523,8 +607,9 @@ button:focus-visible {
 
 .todo-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.94rem;
   font-weight: 800;
+  line-height: 1.4;
 }
 
 .todo-title.completed {
@@ -563,7 +648,8 @@ button:focus-visible {
 }
 
 .todo-meta strong {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
+  line-height: 1.25;
 }
 
 .todo-toggle {
@@ -602,8 +688,8 @@ button:focus-visible {
   flex: 0 0 auto;
   min-width: 52px;
   border-radius: 999px;
-  padding: 5px 10px;
-  font-size: 0.76rem;
+  padding: 4px 9px;
+  font-size: 0.7rem;
   font-weight: 800;
   line-height: 1;
   text-align: center;
@@ -641,10 +727,12 @@ button:focus-visible {
 .empty-state strong,
 .empty-state span {
   color: hsl(var(--foreground));
+  line-height: 1.45;
 }
 
 .empty-state span {
   color: hsl(var(--muted-foreground));
+  font-size: 0.86rem;
 }
 
 .weekday-grid {
@@ -666,7 +754,8 @@ button:focus-visible {
 
 .weekday-card span,
 .weekday-card strong {
-  font-size: 0.76rem;
+  font-size: 0.7rem;
+  line-height: 1.25;
 }
 
 .weekday-bar-track {
@@ -689,7 +778,7 @@ button:focus-visible {
 .date-group-item {
   justify-content: space-between;
   gap: 12px;
-  padding: 15px;
+  padding: 14px;
   border: 1px solid hsl(var(--border));
   border-radius: 20px;
   background: hsl(var(--background));
@@ -727,9 +816,10 @@ button:focus-visible {
 .tabbar-button {
   border: 0;
   border-radius: 999px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   color: hsl(var(--muted-foreground));
   background: transparent;
+  font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -752,7 +842,7 @@ button:focus-visible {
   }
 
   .panel {
-    padding: 18px;
+    padding: 17px;
     border-radius: 24px;
   }
 
@@ -804,7 +894,7 @@ button:focus-visible {
   }
 
   .record-summary-card strong {
-    font-size: 1.35rem;
+    font-size: 1.22rem;
   }
 
   .weekday-grid {

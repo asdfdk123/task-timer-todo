@@ -2,8 +2,7 @@ import { InteractiveTimer } from '../components/InteractiveTimer'
 import { TodoListSection } from '../components/TodoListSection'
 import type { Todo } from '../types/todo'
 import { formatDuration, formatReadableDuration } from '../utils/time'
-
-const QUICK_MINUTES = [5, 15, 25, 50]
+import { QUICK_TIMER_MINUTES } from '../utils/timerConfig'
 
 type TimerState = 'idle' | 'running' | 'paused' | 'finished'
 
@@ -108,7 +107,15 @@ export function TimerPage({
   })
   const stateText = getStateText(timerState)
   const canEditTimer = timerState === 'idle'
+  const canStartTimer = selectedTodo !== null && !selectedTodo.completed
   const activeTaskLabel = selectedTodo?.title ?? '할 일을 선택해 주세요'
+  const timerNotice =
+    selectedTodo === null
+      ? '할 일을 먼저 추가하거나 선택해 주세요.'
+      : selectedTodo.completed
+        ? '완료된 할 일은 타이머를 시작할 수 없어요.'
+        : null
+  const helperText = timerNotice ?? stateText.helperText
 
   return (
     <>
@@ -125,7 +132,7 @@ export function TimerPage({
 
         <InteractiveTimer
           durationSeconds={timerDurationSec}
-          helperText={stateText.helperText}
+          helperText={helperText}
           isInteractive={canEditTimer}
           isRunning={isRunning}
           onDurationChange={onDurationChange}
@@ -137,7 +144,7 @@ export function TimerPage({
 
         {canEditTimer ? (
           <div className="quick-chip-row" aria-label="빠른 시간 설정">
-            {QUICK_MINUTES.map((minutes) => (
+            {QUICK_TIMER_MINUTES.map((minutes) => (
               <button
                 key={minutes}
                 type="button"
@@ -154,7 +161,12 @@ export function TimerPage({
 
         <div className="timer-controls" aria-label="타이머 제어">
           {timerState === 'idle' ? (
-            <button type="button" className="primary-button" onClick={onStart}>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={!canStartTimer}
+              onClick={onStart}
+            >
               시작
             </button>
           ) : null}
@@ -184,6 +196,7 @@ export function TimerPage({
             </button>
           ) : null}
         </div>
+        {timerNotice ? <p className="timer-notice">{timerNotice}</p> : null}
       </section>
 
       <section className="today-record-card panel" aria-label="오늘의 기록">

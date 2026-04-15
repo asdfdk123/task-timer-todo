@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
+import { TIMER_MAX_MINUTES, TIMER_SNAP_MINUTES } from '../utils/timerConfig'
 
-const MAX_MINUTES = 60
-const SNAP_MINUTES = 1
 const SIZE = 280
 const CENTER = SIZE / 2
 const RADIUS = 126
@@ -74,7 +73,7 @@ function getVisualRatio({
   }
 
   if (state === 'idle') {
-    return clampRatio(durationSeconds / (MAX_MINUTES * 60))
+    return clampRatio(durationSeconds / (TIMER_MAX_MINUTES * 60))
   }
 
   return durationSeconds > 0 ? clampRatio(remainingSeconds / durationSeconds) : 0
@@ -87,9 +86,12 @@ function getMinutesFromPointer(event: PointerEvent<SVGSVGElement>, svg: SVGSVGEl
   const angle = Math.atan2(y, x) + Math.PI / 2
   const normalizedAngle = (angle + Math.PI * 2) % (Math.PI * 2)
   const ratio = normalizedAngle / (Math.PI * 2)
-  const minutes = Math.round((ratio * MAX_MINUTES) / SNAP_MINUTES) * SNAP_MINUTES
+  const minutes =
+    Math.round((ratio * TIMER_MAX_MINUTES) / TIMER_SNAP_MINUTES) * TIMER_SNAP_MINUTES
 
-  return minutes === 0 ? MAX_MINUTES : Math.min(MAX_MINUTES, Math.max(SNAP_MINUTES, minutes))
+  return minutes === 0
+    ? TIMER_MAX_MINUTES
+    : Math.min(TIMER_MAX_MINUTES, Math.max(TIMER_SNAP_MINUTES, minutes))
 }
 
 export function InteractiveTimer({
@@ -111,7 +113,7 @@ export function InteractiveTimer({
     state,
   })
   const sectorPath = createSectorPath(visualRatio)
-  const selectedMinutes = Math.max(SNAP_MINUTES, Math.round(durationSeconds / 60))
+  const selectedMinutes = Math.max(TIMER_SNAP_MINUTES, Math.round(durationSeconds / 60))
   const tickAngles = Array.from({ length: 12 }, (_, index) => index * (Math.PI / 6))
 
   const updateDurationFromPointer = (event: PointerEvent<SVGSVGElement>) => {

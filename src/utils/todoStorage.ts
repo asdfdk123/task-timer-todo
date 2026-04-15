@@ -2,9 +2,9 @@ import type { TimerSession } from '../types/session'
 import type { Todo } from '../types/todo'
 import type { TodoAppState } from '../types/todoAppState'
 import { getLocalDateKey } from './time'
+import { DEFAULT_TIMER_SECONDS } from './timerConfig'
 
 const STORAGE_KEY = 'todo-timer-app-state'
-const DEFAULT_TIMER_SECONDS = 25 * 60
 
 function isTodo(value: unknown): value is Todo {
   if (typeof value !== 'object' || value === null) {
@@ -72,10 +72,8 @@ export function sanitizeTodoAppState(state: TodoAppState): TodoAppState {
     state.selectedTodoId !== null && todoIds.has(state.selectedTodoId)
       ? state.selectedTodoId
       : state.todos.find((todo) => !todo.completed)?.id ?? state.todos[0]?.id ?? null
-  const runningTodoId =
-    state.runningTodoId !== null && todoIds.has(state.runningTodoId)
-      ? state.runningTodoId
-      : null
+  const runningTodo = state.todos.find((todo) => todo.id === state.runningTodoId)
+  const runningTodoId = runningTodo && !runningTodo.completed ? runningTodo.id : null
   const startedAt =
     runningTodoId !== null && typeof state.startedAt === 'number' ? state.startedAt : null
   const activeSessionStartedAt =
@@ -134,12 +132,13 @@ export function loadTodoAppState(fallbackState: TodoAppState) {
 
 export function saveTodoAppState(state: TodoAppState) {
   if (typeof window === 'undefined') {
-    return
+    return true
   }
 
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    return true
   } catch {
-    return
+    return false
   }
 }

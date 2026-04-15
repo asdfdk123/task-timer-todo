@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { TimerSession } from '../types/session'
 import type { Todo } from '../types/todo'
+import { trackEvent } from '../utils/analytics'
 import { createTimerSession } from '../utils/sessions'
 import { getLocalDateKey, getTodayElapsedSeconds } from '../utils/time'
+import { DEFAULT_TIMER_SECONDS } from '../utils/timerConfig'
 
 type UseTodoTimerParams = {
   initialActiveSessionStartedAt: number | null
@@ -19,8 +21,6 @@ type UseTodoTimerParams = {
   setTodos: Dispatch<SetStateAction<Todo[]>>
   todos: Todo[]
 }
-
-const DEFAULT_TIMER_SECONDS = 25 * 60
 
 function getElapsedSinceStart(startedAt: number | null, now: number) {
   if (startedAt === null) {
@@ -140,6 +140,10 @@ export function useTodoTimer({
       })
 
       setSessions((currentSessions) => [completedSession, ...currentSessions])
+      trackEvent('timer_completed', {
+        durationMinutes: Math.round(timerDurationSec / 60),
+        todoId: targetTodo.id,
+      })
     }
 
     setTimerRemainingSec(Math.max(0, timerRemainingSec - elapsedSeconds))
@@ -187,6 +191,12 @@ export function useTodoTimer({
 
   const handleStartTimer = () => {
     if (selectedTodoId === null) {
+      return
+    }
+
+    const selectedTodo = todos.find((todo) => todo.id === selectedTodoId)
+
+    if (!selectedTodo || selectedTodo.completed) {
       return
     }
 

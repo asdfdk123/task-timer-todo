@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 
 type TodoCreateFormProps = {
-  onAddTodo: (title: string) => void | number
+  onAddTodo: (title: string) => number
 }
 
 export function TodoCreateForm({ onAddTodo }: TodoCreateFormProps) {

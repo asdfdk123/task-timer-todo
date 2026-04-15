@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Todo } from '../types/todo'
 import { formatDuration } from '../utils/time'
 
@@ -25,17 +25,19 @@ export function TodoItem({
   onUpdate,
   isSelected,
 }: TodoItemProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [draftTitle, setDraftTitle] = useState(todo.title)
+  const trimmedDraftTitle = draftTitle.trim()
+  const isDraftValid = trimmedDraftTitle.length > 0
 
   const handleSave = () => {
-    const trimmedTitle = draftTitle.trim()
-
-    if (!trimmedTitle) {
+    if (!isDraftValid) {
+      textareaRef.current?.focus()
       return
     }
 
-    onUpdate(todo.id, trimmedTitle)
+    onUpdate(todo.id, trimmedDraftTitle)
     setIsEditing(false)
   }
 
@@ -69,13 +71,22 @@ export function TodoItem({
         {isEditing ? (
           <div className="todo-edit-form">
             <textarea
+              ref={textareaRef}
               value={draftTitle}
               onChange={(event) => setDraftTitle(event.target.value)}
               aria-label="할 일 제목 수정"
+              aria-describedby={!isDraftValid ? `todo-edit-help-${todo.id}` : undefined}
+              aria-invalid={!isDraftValid}
+              autoFocus
               rows={3}
             />
+            {!isDraftValid ? (
+              <p id={`todo-edit-help-${todo.id}`} className="form-error">
+                제목을 입력해야 저장할 수 있어요.
+              </p>
+            ) : null}
             <div className="todo-actions">
-              <button type="button" onClick={handleSave}>
+              <button type="button" onClick={handleSave} disabled={!isDraftValid}>
                 저장
               </button>
               <button type="button" className="ghost-button" onClick={handleCancel}>
