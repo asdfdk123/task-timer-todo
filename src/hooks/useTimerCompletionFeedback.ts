@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { COMPLETION_SOUND_SRC, COMPLETION_SOUND_VOLUME } from '../utils/soundConfig'
 
 const SOUND_SETTING_KEY = 'todo-timer-completion-sound-enabled'
@@ -38,6 +38,12 @@ function createCompletionAudio() {
   return audio
 }
 
+function getCompletionAudio(audioRef: MutableRefObject<HTMLAudioElement | null>) {
+  audioRef.current ??= createCompletionAudio()
+
+  return audioRef.current
+}
+
 export function useTimerCompletionFeedback() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const toastTimerRef = useRef<number | null>(null)
@@ -72,21 +78,22 @@ export function useTimerCompletionFeedback() {
       return
     }
 
-    const audio = audioRef.current
+    const audio = getCompletionAudio(audioRef)
 
     if (!audio) {
       return
     }
 
     try {
+      const originalVolume = audio.volume
       audio.load()
-      audio.muted = true
+      audio.volume = 0
       await audio.play()
       audio.pause()
       audio.currentTime = 0
-      audio.muted = false
+      audio.volume = originalVolume || COMPLETION_SOUND_VOLUME
     } catch {
-      audio.muted = false
+      audio.volume = COMPLETION_SOUND_VOLUME
       return
     }
   }
@@ -96,7 +103,7 @@ export function useTimerCompletionFeedback() {
       return
     }
 
-    const audio = audioRef.current
+    const audio = getCompletionAudio(audioRef)
 
     if (!audio) {
       return
@@ -150,6 +157,7 @@ export function useTimerCompletionFeedback() {
       try {
         new window.Notification('집중 시간이 끝났어요', {
           body: message,
+          tag: 'task-timer-completed',
         })
       } catch {
         return

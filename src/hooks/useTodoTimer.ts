@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { TimerSession } from '../types/session'
 import type { Todo } from '../types/todo'
@@ -50,6 +50,7 @@ export function useTodoTimer({
   setTodos,
   todos,
 }: UseTodoTimerParams) {
+  const completedSessionKeyRef = useRef<string | null>(null)
   const currentDateKey = getLocalDateKey(Date.now())
   const [runningTodoId, setRunningTodoId] = useState<number | null>(initialRunningTodoId)
   const [startedAt, setStartedAt] = useState<number | null>(initialStartedAt)
@@ -108,6 +109,18 @@ export function useTodoTimer({
   const commitRunningTime = (targetTodoId: number, shouldCreateSession = false) => {
     if (runningTodoId !== targetTodoId || startedAt === null) {
       return 0
+    }
+
+    const completionKey = shouldCreateSession
+      ? `${targetTodoId}:${startedAt}:${timerDurationSec}`
+      : null
+
+    if (completionKey && completedSessionKeyRef.current === completionKey) {
+      return 0
+    }
+
+    if (completionKey) {
+      completedSessionKeyRef.current = completionKey
     }
 
     const commitTime = Date.now()
@@ -222,6 +235,7 @@ export function useTodoTimer({
     const nextRemainingSec = timerRemainingSec > 0 ? timerRemainingSec : timerDurationSec
     const startTime = Date.now()
 
+    completedSessionKeyRef.current = null
     setTimerRemainingSec(nextRemainingSec)
     setRunningTodoId(selectedTodoId)
     setSelectedTodoId(selectedTodoId)
