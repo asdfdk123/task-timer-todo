@@ -2,6 +2,7 @@ import type { TimerSession } from './session'
 import type { Todo } from './todo'
 
 export type TodoAppState = {
+  schemaVersion: number
   todos: Todo[]
   sessions: TimerSession[]
   selectedTodoId: number | null

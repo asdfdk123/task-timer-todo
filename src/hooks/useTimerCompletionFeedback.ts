@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type MutableRefObject } from 'react'
-import { COMPLETION_SOUND_SRC, COMPLETION_SOUND_VOLUME } from '../utils/soundConfig'
+import {
+  COMPLETION_SOUND_MAX_PLAY_MS,
+  COMPLETION_SOUND_SRC,
+  COMPLETION_SOUND_VOLUME,
+} from '../utils/soundConfig'
 
 const SOUND_SETTING_KEY = 'todo-timer-completion-sound-enabled'
 
@@ -46,6 +50,7 @@ function getCompletionAudio(audioRef: MutableRefObject<HTMLAudioElement | null>)
 
 export function useTimerCompletionFeedback() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const soundStopTimerRef = useRef<number | null>(null)
   const toastTimerRef = useRef<number | null>(null)
   const [isSoundEnabled, setIsSoundEnabled] = useState(getStoredSoundEnabled)
   const [notificationPermission, setNotificationPermission] =
@@ -66,6 +71,10 @@ export function useTimerCompletionFeedback() {
     return () => {
       if (toastTimerRef.current !== null) {
         window.clearTimeout(toastTimerRef.current)
+      }
+
+      if (soundStopTimerRef.current !== null) {
+        window.clearTimeout(soundStopTimerRef.current)
       }
 
       audioRef.current?.pause()
@@ -110,10 +119,18 @@ export function useTimerCompletionFeedback() {
     }
 
     try {
+      if (soundStopTimerRef.current !== null) {
+        window.clearTimeout(soundStopTimerRef.current)
+      }
+
       audio.pause()
       audio.currentTime = 0
       audio.volume = COMPLETION_SOUND_VOLUME
       await audio.play()
+      soundStopTimerRef.current = window.setTimeout(() => {
+        audio.pause()
+        audio.currentTime = 0
+      }, COMPLETION_SOUND_MAX_PLAY_MS)
     } catch {
       return
     }
@@ -155,10 +172,19 @@ export function useTimerCompletionFeedback() {
       notificationPermission === 'granted'
     ) {
       try {
-        new window.Notification('집중 시간이 끝났어요', {
+        const notification = new window.Notification('집중 시간이 끝났어요', {
           body: message,
           tag: 'task-timer-completed',
         })
+
+        notification.onclick = () => {
+          try {
+            window.focus()
+            notification.close()
+          } catch {
+            return
+          }
+        }
       } catch {
         return
       }

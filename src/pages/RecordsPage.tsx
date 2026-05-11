@@ -119,7 +119,7 @@ export function RecordsPage({ sessions }: RecordsPageProps) {
       <section className="panel records-card">
         <div className="section-heading">
           <p className="section-label">날짜별 보기</p>
-          <h2>캘린더용 기록 그룹</h2>
+          <h2>최근 날짜별 집중 기록</h2>
         </div>
 
         {dateGroups.length === 0 ? (

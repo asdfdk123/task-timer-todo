@@ -5,6 +5,7 @@ import { getLocalDateKey } from './time'
 import { DEFAULT_TIMER_SECONDS } from './timerConfig'
 
 const STORAGE_KEY = 'todo-timer-app-state'
+export const STORAGE_SCHEMA_VERSION = 2
 
 function isTodo(value: unknown): value is Todo {
   if (typeof value !== 'object' || value === null) {
@@ -40,29 +41,8 @@ function isTimerSession(value: unknown): value is TimerSession {
   )
 }
 
-function isTodoAppState(value: unknown): value is TodoAppState {
-  if (typeof value !== 'object' || value === null) {
-    return false
-  }
-
-  const state = value as Record<string, unknown>
-
-  return (
-    Array.isArray(state.todos) &&
-    state.todos.every(isTodo) &&
-    (state.sessions === undefined ||
-      (Array.isArray(state.sessions) && state.sessions.every(isTimerSession))) &&
-    (typeof state.selectedTodoId === 'number' || state.selectedTodoId === null) &&
-    (typeof state.runningTodoId === 'number' || state.runningTodoId === null) &&
-    (typeof state.startedAt === 'number' || state.startedAt === null) &&
-    (typeof state.activeSessionStartedAt === 'number' ||
-      state.activeSessionStartedAt === null ||
-      state.activeSessionStartedAt === undefined) &&
-    (typeof state.timerDurationSec === 'number' || state.timerDurationSec === undefined) &&
-    (typeof state.timerRemainingSec === 'number' || state.timerRemainingSec === undefined) &&
-    typeof state.todayFocusDateKey === 'string' &&
-    typeof state.todayFocusSec === 'number'
-  )
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }
 
 export function sanitizeTodoAppState(state: TodoAppState): TodoAppState {
@@ -93,6 +73,7 @@ export function sanitizeTodoAppState(state: TodoAppState): TodoAppState {
   const todayFocusSec = todayFocusDateKey === state.todayFocusDateKey ? state.todayFocusSec : 0
 
   return {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
     todos: state.todos,
     sessions: Array.isArray(state.sessions) ? state.sessions.filter(isTimerSession) : [],
     selectedTodoId,
@@ -104,6 +85,61 @@ export function sanitizeTodoAppState(state: TodoAppState): TodoAppState {
     todayFocusDateKey,
     todayFocusSec,
   }
+}
+
+function normalizeStoredTodoAppState(rawState: unknown, fallbackState: TodoAppState) {
+  if (!isRecord(rawState)) {
+    return fallbackState
+  }
+
+  const todos = Array.isArray(rawState.todos)
+    ? rawState.todos.filter(isTodo)
+    : fallbackState.todos
+  const sessions = Array.isArray(rawState.sessions)
+    ? rawState.sessions.filter(isTimerSession)
+    : fallbackState.sessions
+
+  return sanitizeTodoAppState({
+    schemaVersion:
+      typeof rawState.schemaVersion === 'number'
+        ? rawState.schemaVersion
+        : STORAGE_SCHEMA_VERSION,
+    todos,
+    sessions,
+    selectedTodoId:
+      typeof rawState.selectedTodoId === 'number' || rawState.selectedTodoId === null
+        ? rawState.selectedTodoId
+        : fallbackState.selectedTodoId,
+    runningTodoId:
+      typeof rawState.runningTodoId === 'number' || rawState.runningTodoId === null
+        ? rawState.runningTodoId
+        : fallbackState.runningTodoId,
+    startedAt:
+      typeof rawState.startedAt === 'number' || rawState.startedAt === null
+        ? rawState.startedAt
+        : fallbackState.startedAt,
+    activeSessionStartedAt:
+      typeof rawState.activeSessionStartedAt === 'number' ||
+      rawState.activeSessionStartedAt === null
+        ? rawState.activeSessionStartedAt
+        : fallbackState.activeSessionStartedAt,
+    timerDurationSec:
+      typeof rawState.timerDurationSec === 'number'
+        ? rawState.timerDurationSec
+        : fallbackState.timerDurationSec,
+    timerRemainingSec:
+      typeof rawState.timerRemainingSec === 'number'
+        ? rawState.timerRemainingSec
+        : fallbackState.timerRemainingSec,
+    todayFocusDateKey:
+      typeof rawState.todayFocusDateKey === 'string'
+        ? rawState.todayFocusDateKey
+        : fallbackState.todayFocusDateKey,
+    todayFocusSec:
+      typeof rawState.todayFocusSec === 'number'
+        ? rawState.todayFocusSec
+        : fallbackState.todayFocusSec,
+  })
 }
 
 export function loadTodoAppState(fallbackState: TodoAppState) {
@@ -120,11 +156,7 @@ export function loadTodoAppState(fallbackState: TodoAppState) {
 
     const parsedState: unknown = JSON.parse(rawState)
 
-    if (!isTodoAppState(parsedState)) {
-      return fallbackState
-    }
-
-    return sanitizeTodoAppState(parsedState)
+    return normalizeStoredTodoAppState(parsedState, fallbackState)
   } catch {
     return fallbackState
   }

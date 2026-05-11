@@ -56,7 +56,11 @@ const consoleAnalyticsProvider: AnalyticsProvider = (eventName, payload) => {
   console.info('[analytics]', eventName, payload ?? {})
 }
 
-let analyticsProvider: AnalyticsProvider = consoleAnalyticsProvider
+const noopAnalyticsProvider: AnalyticsProvider = () => {}
+
+let analyticsProvider: AnalyticsProvider = import.meta.env.DEV
+  ? consoleAnalyticsProvider
+  : noopAnalyticsProvider
 
 export function setAnalyticsProvider(provider: AnalyticsProvider) {
   analyticsProvider = provider

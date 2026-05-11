@@ -15,7 +15,11 @@ import { trackEvent } from "./utils/analytics";
 import { getSessionsByDate } from "./utils/sessionSelectors";
 import { getLocalDateKey } from "./utils/time";
 import { createTodoId } from "./utils/todoIds";
-import { loadTodoAppState, sanitizeTodoAppState } from "./utils/todoStorage";
+import {
+  loadTodoAppState,
+  sanitizeTodoAppState,
+  STORAGE_SCHEMA_VERSION,
+} from "./utils/todoStorage";
 import "./App.css";
 
 const initialTodos: Todo[] = [
@@ -40,6 +44,7 @@ const initialTodos: Todo[] = [
 ];
 
 const fallbackState: TodoAppState = {
+  schemaVersion: STORAGE_SCHEMA_VERSION,
   todos: initialTodos,
   sessions: [],
   selectedTodoId:
@@ -133,6 +138,7 @@ function App() {
 
   const { hasStorageError } = useTodoAppStorage(
     sanitizeTodoAppState({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
       todos,
       sessions,
       selectedTodoId,

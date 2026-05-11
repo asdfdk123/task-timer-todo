@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { TimerSession } from '../types/session'
 import type { Todo } from '../types/todo'
@@ -51,7 +51,6 @@ export function useTodoTimer({
   todos,
 }: UseTodoTimerParams) {
   const completedSessionKeyRef = useRef<string | null>(null)
-  const currentDateKey = getLocalDateKey(Date.now())
   const [runningTodoId, setRunningTodoId] = useState<number | null>(initialRunningTodoId)
   const [startedAt, setStartedAt] = useState<number | null>(initialStartedAt)
   const [activeSessionStartedAt, setActiveSessionStartedAt] = useState<number | null>(
@@ -64,10 +63,18 @@ export function useTodoTimer({
     initialTimerRemainingSec >= 0 ? initialTimerRemainingSec : DEFAULT_TIMER_SECONDS,
   )
   const [todayFocusDateKey, setTodayFocusDateKey] = useState(
-    initialTodayFocusDateKey === currentDateKey ? initialTodayFocusDateKey : currentDateKey,
+    () => {
+      const currentDateKey = getLocalDateKey(Date.now())
+
+      return initialTodayFocusDateKey === currentDateKey ? initialTodayFocusDateKey : currentDateKey
+    },
   )
   const [todayFocusSec, setTodayFocusSec] = useState(
-    initialTodayFocusDateKey === currentDateKey ? initialTodayFocusSec : 0,
+    () => {
+      const currentDateKey = getLocalDateKey(Date.now())
+
+      return initialTodayFocusDateKey === currentDateKey ? initialTodayFocusSec : 0
+    },
   )
   const [now, setNow] = useState(() => Date.now())
 
@@ -88,8 +95,14 @@ export function useTodoTimer({
       return
     }
 
-    setTodayFocusDateKey(nextDateKey)
-    setTodayFocusSec(0)
+    const timerId = window.setTimeout(() => {
+      setTodayFocusDateKey(nextDateKey)
+      setTodayFocusSec(0)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
   }, [now, todayFocusDateKey])
 
   useEffect(() => {
@@ -106,86 +119,109 @@ export function useTodoTimer({
     }
   }, [runningTodoId, startedAt])
 
-  const commitRunningTime = (targetTodoId: number, shouldCreateSession = false) => {
-    if (runningTodoId !== targetTodoId || startedAt === null) {
-      return 0
-    }
+  const commitRunningTime = useCallback(
+    (targetTodoId: number, shouldCreateSession = false) => {
+      if (runningTodoId !== targetTodoId || startedAt === null) {
+        return 0
+      }
 
-    const completionKey = shouldCreateSession
-      ? `${targetTodoId}:${startedAt}:${timerDurationSec}`
-      : null
+      const completionKey = shouldCreateSession
+        ? `${targetTodoId}:${startedAt}:${timerDurationSec}`
+        : null
 
-    if (completionKey && completedSessionKeyRef.current === completionKey) {
-      return 0
-    }
+      if (completionKey && completedSessionKeyRef.current === completionKey) {
+        return 0
+      }
 
-    if (completionKey) {
-      completedSessionKeyRef.current = completionKey
-    }
+      if (completionKey) {
+        completedSessionKeyRef.current = completionKey
+      }
 
-    const commitTime = Date.now()
-    const targetTodo = todos.find((todo) => todo.id === targetTodoId)
-    const elapsedSeconds = Math.min(
+      const commitTime = Date.now()
+      const expectedCompletedAt = startedAt + timerRemainingSec * 1000
+      const effectiveCompletedAt = shouldCreateSession
+        ? Math.min(commitTime, expectedCompletedAt)
+        : commitTime
+      const targetTodo = todos.find((todo) => todo.id === targetTodoId)
+      const elapsedSeconds = shouldCreateSession
+        ? timerRemainingSec
+        : Math.min(timerRemainingSec, getElapsedSinceStart(startedAt, commitTime))
+      const nextDateKey = getLocalDateKey(effectiveCompletedAt)
+      const todayElapsedSeconds = Math.min(
+        elapsedSeconds,
+        getTodayElapsedSeconds(startedAt, effectiveCompletedAt),
+      )
+
+      setTodos((currentTodos) =>
+        currentTodos.map((todo) =>
+          todo.id === targetTodoId
+            ? {
+                ...todo,
+                totalElapsedSec: todo.totalElapsedSec + elapsedSeconds,
+              }
+            : todo,
+        ),
+      )
+      setTodayFocusDateKey(nextDateKey)
+      setTodayFocusSec((currentFocusSec) =>
+        (todayFocusDateKey === nextDateKey ? currentFocusSec : 0) + todayElapsedSeconds,
+      )
+
+      if (shouldCreateSession && targetTodo && activeSessionStartedAt !== null) {
+        const completedSession = createTimerSession({
+          completedAt: effectiveCompletedAt,
+          durationSec: timerDurationSec,
+          startedAt: activeSessionStartedAt,
+          todo: targetTodo,
+        })
+
+        setSessions((currentSessions) => [completedSession, ...currentSessions])
+        trackEvent('timer_completed', {
+          durationMinutes: Math.round(timerDurationSec / 60),
+          todoId: targetTodo.id,
+        })
+        onTimerCompleted?.({
+          durationSec: timerDurationSec,
+          todoId: targetTodo.id,
+          todoTitle: targetTodo.title,
+        })
+      }
+
+      setTimerRemainingSec(Math.max(0, timerRemainingSec - elapsedSeconds))
+      setStartedAt(null)
+      setActiveSessionStartedAt(shouldCreateSession ? null : activeSessionStartedAt)
+      setNow(effectiveCompletedAt)
+
+      return elapsedSeconds
+    },
+    [
+      activeSessionStartedAt,
+      onTimerCompleted,
+      runningTodoId,
+      setSessions,
+      setTodos,
+      startedAt,
+      timerDurationSec,
       timerRemainingSec,
-      getElapsedSinceStart(startedAt, commitTime),
-    )
-    const nextDateKey = getLocalDateKey(commitTime)
-    const todayElapsedSeconds = Math.min(
-      elapsedSeconds,
-      getTodayElapsedSeconds(startedAt, commitTime),
-    )
-
-    setTodos((currentTodos) =>
-      currentTodos.map((todo) =>
-        todo.id === targetTodoId
-          ? {
-              ...todo,
-              totalElapsedSec: todo.totalElapsedSec + elapsedSeconds,
-            }
-          : todo,
-      ),
-    )
-    setTodayFocusDateKey(nextDateKey)
-    setTodayFocusSec((currentFocusSec) =>
-      (todayFocusDateKey === nextDateKey ? currentFocusSec : 0) + todayElapsedSeconds,
-    )
-
-    if (shouldCreateSession && targetTodo && activeSessionStartedAt !== null) {
-      const completedSession = createTimerSession({
-        completedAt: commitTime,
-        durationSec: timerDurationSec,
-        startedAt: activeSessionStartedAt,
-        todo: targetTodo,
-      })
-
-      setSessions((currentSessions) => [completedSession, ...currentSessions])
-      trackEvent('timer_completed', {
-        durationMinutes: Math.round(timerDurationSec / 60),
-        todoId: targetTodo.id,
-      })
-      onTimerCompleted?.({
-        durationSec: timerDurationSec,
-        todoId: targetTodo.id,
-        todoTitle: targetTodo.title,
-      })
-    }
-
-    setTimerRemainingSec(Math.max(0, timerRemainingSec - elapsedSeconds))
-    setStartedAt(null)
-    setActiveSessionStartedAt(shouldCreateSession ? null : activeSessionStartedAt)
-    setNow(commitTime)
-
-    return elapsedSeconds
-  }
+      todayFocusDateKey,
+      todos,
+    ],
+  )
 
   useEffect(() => {
     if (runningTodoId === null || startedAt === null || displayedRemainingSec > 0) {
       return
     }
 
-    commitRunningTime(runningTodoId, true)
-    setRunningTodoId(null)
-  }, [displayedRemainingSec, runningTodoId, startedAt])
+    const timerId = window.setTimeout(() => {
+      commitRunningTime(runningTodoId, true)
+      setRunningTodoId(null)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
+  }, [commitRunningTime, displayedRemainingSec, runningTodoId, startedAt])
 
   const displayedElapsedById = Object.fromEntries(
     todos.map((todo) => {
@@ -254,14 +290,11 @@ export function useTodoTimer({
   }
 
   const handleResetTimer = () => {
-    if (runningTodoId !== null) {
-      commitRunningTime(runningTodoId)
-      setRunningTodoId(null)
-    }
-
+    setRunningTodoId(null)
     setTimerRemainingSec(timerDurationSec)
     setStartedAt(null)
     setActiveSessionStartedAt(null)
+    completedSessionKeyRef.current = null
     setNow(Date.now())
   }
 

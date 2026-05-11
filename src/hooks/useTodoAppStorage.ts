@@ -6,7 +6,14 @@ export function useTodoAppStorage(state: TodoAppState) {
   const [hasStorageError, setHasStorageError] = useState(false)
 
   useEffect(() => {
-    setHasStorageError(!saveTodoAppState(state))
+    const nextHasStorageError = !saveTodoAppState(state)
+    const timerId = window.setTimeout(() => {
+      setHasStorageError(nextHasStorageError)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
   }, [state])
 
   return {
