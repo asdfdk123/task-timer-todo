@@ -332,6 +332,114 @@ button:disabled {
   gap: 14px;
 }
 
+.supabase-sync-card,
+.supabase-sync-header,
+.supabase-auth-form,
+.supabase-authenticated,
+.supabase-user-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.supabase-sync-header strong,
+.supabase-status-card strong,
+.supabase-user-summary strong {
+  color: hsl(var(--foreground));
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.supabase-sync-header p,
+.supabase-status-card p,
+.supabase-help,
+.supabase-user-summary p {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.supabase-status-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px dashed hsl(var(--border));
+  border-radius: 18px;
+  background: hsl(var(--background));
+}
+
+.supabase-auth-form,
+.supabase-authenticated {
+  padding: 14px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 22px;
+  background: hsl(var(--background));
+}
+
+.supabase-field {
+  display: grid;
+  gap: 8px;
+}
+
+.supabase-field span {
+  color: hsl(var(--foreground));
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.supabase-field input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 18px;
+  padding: 12px 14px;
+  color: hsl(var(--foreground));
+  background: hsl(var(--card));
+  font-size: 0.92rem;
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+
+.supabase-field input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.8);
+}
+
+.supabase-field input:focus {
+  outline: 3px solid hsl(var(--ring) / 0.22);
+  outline-offset: 2px;
+}
+
+.supabase-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.supabase-inline-message {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 16px;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.supabase-inline-message.info {
+  color: hsl(var(--foreground));
+  background: hsl(var(--secondary));
+}
+
+.supabase-inline-message.success {
+  color: hsl(var(--success));
+  background: hsl(145 50% 94%);
+}
+
+.supabase-inline-message.error {
+  color: hsl(var(--primary));
+  background: hsl(4 72% 97%);
+}
+
 .feedback-card strong {
   color: hsl(var(--foreground));
   font-size: 0.98rem;
@@ -965,6 +1073,15 @@ button:focus-visible {
   .setting-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .supabase-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .supabase-actions button {
+    width: 100%;
   }
 
   .todo-create-row input,

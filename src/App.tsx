@@ -3,6 +3,7 @@ import { AppNotice } from "./components/AppNotice";
 import { BottomTabBar } from "./components/BottomTabBar";
 import { CompletionToast } from "./components/CompletionToast";
 import { FeedbackCard } from "./components/FeedbackCard";
+import { SupabaseSyncCard } from "./components/SupabaseSyncCard";
 import { useTodoAppStorage } from "./hooks/useTodoAppStorage";
 import { useTimerCompletionFeedback } from "./hooks/useTimerCompletionFeedback";
 import { useTodoTimer } from "./hooks/useTodoTimer";
@@ -136,21 +137,21 @@ function App() {
     todos,
   });
 
-  const { hasStorageError } = useTodoAppStorage(
-    sanitizeTodoAppState({
-      schemaVersion: STORAGE_SCHEMA_VERSION,
-      todos,
-      sessions,
-      selectedTodoId,
-      runningTodoId,
-      startedAt,
-      activeSessionStartedAt,
-      timerDurationSec,
-      timerRemainingSec,
-      todayFocusDateKey,
-      todayFocusSec,
-    }),
-  );
+  const localAppState = sanitizeTodoAppState({
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    todos,
+    sessions,
+    selectedTodoId,
+    runningTodoId,
+    startedAt,
+    activeSessionStartedAt,
+    timerDurationSec,
+    timerRemainingSec,
+    todayFocusDateKey,
+    todayFocusSec,
+  });
+
+  const { hasStorageError } = useTodoAppStorage(localAppState);
 
   const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null;
   const runningTodo = todos.find((todo) => todo.id === runningTodoId) ?? null;
@@ -319,6 +320,11 @@ function App() {
             브라우저 저장 공간에 현재 상태를 저장하지 못했어요. 저장 공간이 가득 찼거나 비공개 모드일 수 있습니다.
           </AppNotice>
         ) : null}
+        <SupabaseSyncCard
+          completionSoundEnabled={isSoundEnabled}
+          notificationOptIn={notificationPermission === "granted"}
+          state={localAppState}
+        />
         <FeedbackCard />
       </div>
       <CompletionToast message={completionMessage} />
