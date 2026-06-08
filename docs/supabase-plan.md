@@ -23,6 +23,9 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
+`VITE_SUPABASE_URL`에는 `https://<project-ref>.supabase.co` 형태의 **베이스 URL만** 넣습니다.  
+`/rest/v1` 경로까지 붙이면 안 됩니다.
+
 ## 3. SQL / RLS 적용 위치
 
 - migration 파일: [supabase/migrations/202605190001_initial_auth_schema.sql](../supabase/migrations/202605190001_initial_auth_schema.sql)

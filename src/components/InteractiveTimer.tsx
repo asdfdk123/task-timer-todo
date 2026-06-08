@@ -1,34 +1,41 @@
-import { useRef, useState } from 'react'
-import type { PointerEvent } from 'react'
-import { TIMER_MAX_MINUTES, TIMER_SNAP_MINUTES } from '../utils/timerConfig'
+import { useRef, useState } from "react";
+import type { KeyboardEvent, PointerEvent } from "react";
+import {
+  TIMER_MAX_MINUTES,
+  TIMER_SNAP_MINUTES,
+} from "../utils/timerConfig";
 
-const SIZE = 280
-const CENTER = SIZE / 2
-const RADIUS = 126
-const TICK_RADIUS = 116
-const HANDLE_RADIUS = 118
+const SIZE = 280;
+const CENTER = SIZE / 2;
+const RADIUS = 126;
+const TICK_RADIUS = 116;
+const HANDLE_RADIUS = 118;
 
 type InteractiveTimerProps = {
-  durationSeconds: number
-  helperText: string
-  isInteractive: boolean
-  isRunning: boolean
-  onDurationChange: (durationSeconds: number) => void
-  remainingSeconds: number
-  remainingTime: string
-  state: 'idle' | 'running' | 'paused' | 'finished'
-  stateLabel: string
-}
+  durationSeconds: number;
+  helperText: string;
+  isInteractive: boolean;
+  isRunning: boolean;
+  onDurationChange: (durationSeconds: number) => void;
+  remainingSeconds: number;
+  remainingTime: string;
+  state: "idle" | "running" | "paused" | "finished";
+  stateLabel: string;
+};
 
 function polarToCartesian(angle: number) {
   return {
     x: CENTER + RADIUS * Math.sin(angle),
     y: CENTER - RADIUS * Math.cos(angle),
-  }
+  };
 }
 
 function clampRatio(ratio: number) {
-  return Math.min(1, Math.max(0, ratio))
+  return Math.min(1, Math.max(0, ratio));
+}
+
+function clampMinutes(minutes: number) {
+  return Math.min(TIMER_MAX_MINUTES, Math.max(TIMER_SNAP_MINUTES, minutes));
 }
 
 function createSectorPath(ratio: number) {
@@ -39,24 +46,24 @@ function createSectorPath(ratio: number) {
       a ${RADIUS} ${RADIUS} 0 1 1 0 ${RADIUS * 2}
       a ${RADIUS} ${RADIUS} 0 1 1 0 ${-RADIUS * 2}
       Z
-    `
+    `;
   }
 
   if (ratio <= 0) {
-    return ''
+    return "";
   }
 
-  const angle = ratio * Math.PI * 2
-  const start = polarToCartesian(0)
-  const end = polarToCartesian(angle)
-  const largeArcFlag = ratio > 0.5 ? 1 : 0
+  const angle = ratio * Math.PI * 2;
+  const start = polarToCartesian(0);
+  const end = polarToCartesian(angle);
+  const largeArcFlag = ratio > 0.5 ? 1 : 0;
 
   return [
     `M ${CENTER} ${CENTER}`,
     `L ${start.x} ${start.y}`,
     `A ${RADIUS} ${RADIUS} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`,
-    'Z',
-  ].join(' ')
+    "Z",
+  ].join(" ");
 }
 
 function getVisualRatio({
@@ -64,34 +71,40 @@ function getVisualRatio({
   remainingSeconds,
   state,
 }: {
-  durationSeconds: number
-  remainingSeconds: number
-  state: InteractiveTimerProps['state']
+  durationSeconds: number;
+  remainingSeconds: number;
+  state: InteractiveTimerProps["state"];
 }) {
-  if (state === 'finished') {
-    return 0
+  if (state === "finished") {
+    return 0;
   }
 
-  if (state === 'idle') {
-    return clampRatio(durationSeconds / (TIMER_MAX_MINUTES * 60))
+  if (state === "idle") {
+    return clampRatio(durationSeconds / (TIMER_MAX_MINUTES * 60));
   }
 
-  return durationSeconds > 0 ? clampRatio(remainingSeconds / durationSeconds) : 0
+  return durationSeconds > 0
+    ? clampRatio(remainingSeconds / durationSeconds)
+    : 0;
 }
 
-function getMinutesFromPointer(event: PointerEvent<SVGSVGElement>, svg: SVGSVGElement) {
-  const rect = svg.getBoundingClientRect()
-  const x = event.clientX - rect.left - rect.width / 2
-  const y = event.clientY - rect.top - rect.height / 2
-  const angle = Math.atan2(y, x) + Math.PI / 2
-  const normalizedAngle = (angle + Math.PI * 2) % (Math.PI * 2)
-  const ratio = normalizedAngle / (Math.PI * 2)
+function getMinutesFromPointer(
+  event: PointerEvent<SVGSVGElement>,
+  svg: SVGSVGElement,
+) {
+  const rect = svg.getBoundingClientRect();
+  const x = event.clientX - rect.left - rect.width / 2;
+  const y = event.clientY - rect.top - rect.height / 2;
+  const angle = Math.atan2(y, x) + Math.PI / 2;
+  const normalizedAngle = (angle + Math.PI * 2) % (Math.PI * 2);
+  const ratio = normalizedAngle / (Math.PI * 2);
   const minutes =
-    Math.round((ratio * TIMER_MAX_MINUTES) / TIMER_SNAP_MINUTES) * TIMER_SNAP_MINUTES
+    Math.round((ratio * TIMER_MAX_MINUTES) / TIMER_SNAP_MINUTES) *
+    TIMER_SNAP_MINUTES;
 
   return minutes === 0
     ? TIMER_MAX_MINUTES
-    : Math.min(TIMER_MAX_MINUTES, Math.max(TIMER_SNAP_MINUTES, minutes))
+    : clampMinutes(minutes);
 }
 
 export function InteractiveTimer({
@@ -105,59 +118,105 @@ export function InteractiveTimer({
   state,
   stateLabel,
 }: InteractiveTimerProps) {
-  const svgRef = useRef<SVGSVGElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const visualRatio = getVisualRatio({
     durationSeconds,
     remainingSeconds,
     state,
-  })
-  const sectorPath = createSectorPath(visualRatio)
-  const selectedMinutes = Math.max(TIMER_SNAP_MINUTES, Math.round(durationSeconds / 60))
-  const tickAngles = Array.from({ length: 12 }, (_, index) => index * (Math.PI / 6))
+  });
+  const sectorPath = createSectorPath(visualRatio);
+  const selectedMinutes = Math.max(
+    TIMER_SNAP_MINUTES,
+    Math.round(durationSeconds / 60),
+  );
+  const tickAngles = Array.from(
+    { length: 12 },
+    (_, index) => index * (Math.PI / 6),
+  );
+  const canAdjustWithKeyboard = isInteractive && !isRunning;
 
   const updateDurationFromPointer = (event: PointerEvent<SVGSVGElement>) => {
     if (!isInteractive || isRunning || svgRef.current === null) {
-      return
+      return;
     }
 
-    const minutes = getMinutesFromPointer(event, svgRef.current)
-    onDurationChange(minutes * 60)
-  }
+    const minutes = getMinutesFromPointer(event, svgRef.current);
+    onDurationChange(minutes * 60);
+  };
 
   const handlePointerDown = (event: PointerEvent<SVGSVGElement>) => {
     if (!isInteractive || isRunning) {
-      return
+      return;
     }
 
-    event.preventDefault()
-    event.currentTarget.setPointerCapture(event.pointerId)
-    setIsDragging(true)
-    updateDurationFromPointer(event)
-  }
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setIsDragging(true);
+    updateDurationFromPointer(event);
+  };
 
   const handlePointerMove = (event: PointerEvent<SVGSVGElement>) => {
     if (!isDragging) {
-      return
+      return;
     }
 
-    event.preventDefault()
-    updateDurationFromPointer(event)
-  }
+    event.preventDefault();
+    updateDurationFromPointer(event);
+  };
 
   const handlePointerEnd = (event: PointerEvent<SVGSVGElement>) => {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
+      event.currentTarget.releasePointerCapture(event.pointerId);
     }
 
-    setIsDragging(false)
-  }
+    setIsDragging(false);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!canAdjustWithKeyboard) {
+      return;
+    }
+
+    const currentMinutes = Math.max(
+      TIMER_SNAP_MINUTES,
+      Math.round(durationSeconds / 60),
+    );
+
+    if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+      event.preventDefault();
+      onDurationChange(clampMinutes(currentMinutes + TIMER_SNAP_MINUTES) * 60);
+      return;
+    }
+
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+      event.preventDefault();
+      onDurationChange(clampMinutes(currentMinutes - TIMER_SNAP_MINUTES) * 60);
+      return;
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault();
+      onDurationChange(TIMER_SNAP_MINUTES * 60);
+      return;
+    }
+
+    if (event.key === "End") {
+      event.preventDefault();
+      onDurationChange(TIMER_MAX_MINUTES * 60);
+    }
+  };
 
   return (
     <div
-      className={`interactive-timer ${state}${isDragging ? ' dragging' : ''}`}
+      className={`interactive-timer ${state}${isDragging ? " dragging" : ""}`}
       aria-label={`타이머가 ${selectedMinutes}분으로 설정되었습니다. 남은 시간은 ${remainingTime}입니다.`}
-      role="group"
+      aria-valuemax={TIMER_MAX_MINUTES}
+      aria-valuemin={TIMER_SNAP_MINUTES}
+      aria-valuenow={selectedMinutes}
+      onKeyDown={handleKeyDown}
+      role={canAdjustWithKeyboard ? "slider" : "group"}
+      tabIndex={canAdjustWithKeyboard ? 0 : -1}
     >
       <svg
         ref={svgRef}
@@ -170,16 +229,21 @@ export function InteractiveTimer({
         onPointerUp={handlePointerEnd}
         aria-hidden="true"
       >
-        <circle className="interactive-timer-dial" cx={CENTER} cy={CENTER} r={RADIUS} />
+        <circle
+          className="interactive-timer-dial"
+          cx={CENTER}
+          cy={CENTER}
+          r={RADIUS}
+        />
         {tickAngles.map((angle) => {
           const outer = {
             x: CENTER + RADIUS * Math.sin(angle),
             y: CENTER - RADIUS * Math.cos(angle),
-          }
+          };
           const inner = {
             x: CENTER + TICK_RADIUS * Math.sin(angle),
             y: CENTER - TICK_RADIUS * Math.cos(angle),
-          }
+          };
 
           return (
             <line
@@ -190,9 +254,11 @@ export function InteractiveTimer({
               x2={inner.x}
               y2={inner.y}
             />
-          )
+          );
         })}
-        {sectorPath ? <path className="interactive-timer-sector" d={sectorPath} /> : null}
+        {sectorPath ? (
+          <path className="interactive-timer-sector" d={sectorPath} />
+        ) : null}
         {visualRatio > 0 ? (
           <circle
             className="interactive-timer-handle"
@@ -211,5 +277,5 @@ export function InteractiveTimer({
         <small>{helperText}</small>
       </div>
     </div>
-  )
+  );
 }

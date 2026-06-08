@@ -103,6 +103,11 @@
   user-select: none;
 }
 
+.interactive-timer:focus-visible {
+  outline: 3px solid hsl(var(--ring) / 0.32);
+  outline-offset: 6px;
+}
+
 .interactive-timer-face {
   width: 100%;
   height: 100%;

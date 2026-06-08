@@ -19,6 +19,7 @@ export type SupabaseTimerSessionRow = {
   local_todo_id: number
   started_at: string
   todo_title: string
+  updated_at: string
   user_id: string
   weekday_label: string
 }

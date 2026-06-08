@@ -96,6 +96,7 @@ docs/
 - 환경변수:
   - `VITE_SUPABASE_URL`
   - `VITE_SUPABASE_ANON_KEY`
+- `VITE_SUPABASE_URL` 값은 `https://<project-ref>.supabase.co` 형태의 베이스 URL만 사용합니다.
 - 로그인 방식:
   - 이메일 매직 링크
 - 준비된 테이블:

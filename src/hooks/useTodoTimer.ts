@@ -299,10 +299,13 @@ export function useTodoTimer({
   }
 
   const handleRemoveTimerTarget = (todoId: number) => {
-    if (runningTodoId === todoId) {
+    if (runningTodoId === todoId || (runningTodoId === null && selectedTodoId === todoId)) {
       setRunningTodoId(null)
+      setTimerRemainingSec(timerDurationSec)
       setStartedAt(null)
       setActiveSessionStartedAt(null)
+      completedSessionKeyRef.current = null
+      setNow(Date.now())
     }
   }
 
@@ -313,7 +316,11 @@ export function useTodoTimer({
 
     commitRunningTime(todoId)
     setRunningTodoId(null)
+    setTimerRemainingSec(timerDurationSec)
+    setStartedAt(null)
     setActiveSessionStartedAt(null)
+    completedSessionKeyRef.current = null
+    setNow(Date.now())
   }
 
   return {

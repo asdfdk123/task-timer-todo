@@ -44,8 +44,10 @@ function mapTimerSessionToSupabaseRow(
   session: TimerSession,
   userId: string,
 ): Database['public']['Tables']['timer_sessions']['Insert'] {
+  const completedAt = new Date(session.completedAt).toISOString()
+
   return {
-    completed_at: new Date(session.completedAt).toISOString(),
+    completed_at: completedAt,
     date_key: session.date,
     duration_sec: session.durationSec,
     id: `${userId}-${session.id}`,
@@ -53,6 +55,7 @@ function mapTimerSessionToSupabaseRow(
     local_todo_id: session.todoId,
     started_at: new Date(session.startedAt).toISOString(),
     todo_title: session.todoTitle,
+    updated_at: completedAt,
     user_id: userId,
     weekday_label: session.weekday,
   }

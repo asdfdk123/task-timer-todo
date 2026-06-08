@@ -23,35 +23,11 @@ import {
 } from "./utils/todoStorage";
 import "./App.css";
 
-const initialTodos: Todo[] = [
-  {
-    id: 1,
-    title: "프로젝트 개요 작성",
-    completed: false,
-    totalElapsedSec: 2720,
-  },
-  {
-    id: 2,
-    title: "메인 화면 레이아웃 정리",
-    completed: true,
-    totalElapsedSec: 4330,
-  },
-  {
-    id: 3,
-    title: "타이머 동작 흐름 설계",
-    completed: false,
-    totalElapsedSec: 1115,
-  },
-];
-
 const fallbackState: TodoAppState = {
   schemaVersion: STORAGE_SCHEMA_VERSION,
-  todos: initialTodos,
+  todos: [],
   sessions: [],
-  selectedTodoId:
-    initialTodos.find((todo) => !todo.completed)?.id ??
-    initialTodos[0]?.id ??
-    null,
+  selectedTodoId: null,
   runningTodoId: null,
   startedAt: null,
   activeSessionStartedAt: null,
@@ -64,6 +40,7 @@ const fallbackState: TodoAppState = {
 function App() {
   const [initialState] = useState(() => loadTodoAppState(fallbackState));
   const [activeTab, setActiveTab] = useState<"timer" | "records">("timer");
+  const [todayDateKey, setTodayDateKey] = useState(() => getLocalDateKey(Date.now()));
   const [todos, setTodos] = useState(initialState.todos);
   const [sessions, setSessions] = useState<TimerSession[]>(
     initialState.sessions,
@@ -86,24 +63,28 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (
-      selectedTodoId !== null &&
-      todos.some((todo) => todo.id === selectedTodoId)
-    ) {
-      return;
-    }
+    const syncTodayDateKey = () => {
+      setTodayDateKey(getLocalDateKey(Date.now()));
+    };
 
-    const fallbackTodo =
-      todos.find((todo) => !todo.completed) ?? todos[0] ?? null;
+    const intervalId = window.setInterval(syncTodayDateKey, 60 * 1000);
 
-    setSelectedTodoId(fallbackTodo?.id ?? null);
-  }, [selectedTodoId, todos]);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  const resolvedSelectedTodoId =
+    selectedTodoId !== null &&
+    todos.some((todo) => todo.id === selectedTodoId)
+      ? selectedTodoId
+      : (todos.find((todo) => !todo.completed) ?? todos[0] ?? null)?.id ?? null;
 
   const {
+    activeSessionStartedAt,
     displayedElapsedById,
     displayedRemainingSec,
     displayedTodayFocusSec,
-    activeSessionStartedAt,
     handleCompleteTimerTarget,
     handlePauseTimer,
     handleRemoveTimerTarget,
@@ -130,7 +111,7 @@ function App() {
         todoTitle,
       });
     },
-    selectedTodoId,
+    selectedTodoId: resolvedSelectedTodoId,
     setSelectedTodoId,
     setSessions,
     setTodos,
@@ -141,7 +122,7 @@ function App() {
     schemaVersion: STORAGE_SCHEMA_VERSION,
     todos,
     sessions,
-    selectedTodoId,
+    selectedTodoId: resolvedSelectedTodoId,
     runningTodoId,
     startedAt,
     activeSessionStartedAt,
@@ -153,14 +134,14 @@ function App() {
 
   const { hasStorageError } = useTodoAppStorage(localAppState);
 
-  const selectedTodo = todos.find((todo) => todo.id === selectedTodoId) ?? null;
+  const selectedTodo =
+    todos.find((todo) => todo.id === resolvedSelectedTodoId) ?? null;
   const runningTodo = todos.find((todo) => todo.id === runningTodoId) ?? null;
   const activeCardTodo = runningTodo ?? selectedTodo;
 
   const todaySessions = getSessionsByDate(
     sessions,
-    // eslint-disable-next-line react-hooks/purity
-    getLocalDateKey(Date.now()),
+    todayDateKey,
   );
 
   const handleAddTodo = (title: string) => {
@@ -202,7 +183,7 @@ function App() {
       todoId: id,
     });
 
-    if (selectedTodoId === id) {
+    if (resolvedSelectedTodoId === id) {
       setSelectedTodoId(null);
     }
 
@@ -210,6 +191,14 @@ function App() {
   };
 
   const handleToggleTodo = (id: number) => {
+    if (
+      resolvedSelectedTodoId === id &&
+      runningTodoId === null &&
+      timerRemainingSec < timerDurationSec
+    ) {
+      handleResetTimer();
+    }
+
     handleCompleteTimerTarget(id);
     const targetTodo = todos.find((todo) => todo.id === id);
 
@@ -237,7 +226,7 @@ function App() {
     handleTimerDurationChange(durationSeconds);
     trackEvent("timer_duration_set", {
       durationMinutes: Math.round(durationSeconds / 60),
-      hasSelectedTodo: selectedTodoId !== null,
+      hasSelectedTodo: resolvedSelectedTodoId !== null,
     });
   };
 
@@ -293,7 +282,7 @@ function App() {
             notificationPermission={notificationPermission}
             runningTodoId={runningTodoId}
             selectedTodo={activeCardTodo}
-            selectedTodoId={selectedTodoId}
+            selectedTodoId={resolvedSelectedTodoId}
             sessionsTodayCount={todaySessions.length}
             timerDurationSec={timerDurationSec}
             todayFocusSec={displayedTodayFocusSec}
@@ -317,7 +306,8 @@ function App() {
         )}
         {hasStorageError ? (
           <AppNotice title="저장 상태를 확인해 주세요">
-            브라우저 저장 공간에 현재 상태를 저장하지 못했어요. 저장 공간이 가득 찼거나 비공개 모드일 수 있습니다.
+            브라우저 저장 공간 문제로 현재 상태를 저장하지 못했어요. 저장 공간이
+            가득 찼거나 비공개 모드일 수 있습니다.
           </AppNotice>
         ) : null}
         <SupabaseSyncCard
